@@ -96,17 +96,19 @@ def compute_score(
     # true toxin matches are 0.97+. The transform should be decisive in
     # the 0.95-1.0 range while keeping 0.90-0.96 at low scores.
 
-    # Embedding similarity: calibrated against SCOPe 2.08 benchmark.
-    # Non-toxin proteins: sim 0.90-0.97. Toxin matches: sim 0.98+.
-    # The 0.98 boundary separates signal from noise in ESM-2 space.
+    # Embedding similarity: calibrated against SCOPe 2.08 + evasion benchmark.
+    # Non-toxins: 0.90-0.96, mutated toxins: 0.96-0.985, exact matches: 0.98+.
+    # The 0.96 boundary is where signal starts; 0.98+ is strong signal.
     if embedding_sim > 0.99:
-        embedding_score = 0.7 + 0.3 * ((embedding_sim - 0.99) / 0.01)
-    elif embedding_sim > 0.98:
-        embedding_score = 0.5 + 0.2 * ((embedding_sim - 0.98) / 0.01)
-    elif embedding_sim > 0.95:
-        embedding_score = 0.15 + 0.35 * ((embedding_sim - 0.95) / 0.03)
-    elif embedding_sim > 0.90:
-        embedding_score = 0.15 * ((embedding_sim - 0.90) / 0.05)
+        embedding_score = 0.8 + 0.2 * ((embedding_sim - 0.99) / 0.01)
+    elif embedding_sim > 0.97:
+        embedding_score = 0.5 + 0.3 * ((embedding_sim - 0.97) / 0.02)
+    elif embedding_sim > 0.96:
+        embedding_score = 0.35 + 0.15 * ((embedding_sim - 0.96) / 0.01)
+    elif embedding_sim > 0.93:
+        embedding_score = 0.1 + 0.25 * ((embedding_sim - 0.93) / 0.03)
+    elif embedding_sim > 0.85:
+        embedding_score = 0.1 * ((embedding_sim - 0.85) / 0.08)
     else:
         embedding_score = 0.0
 
@@ -160,10 +162,12 @@ def compute_score(
 
     final_score = min(1.0, raw_score + bonus)
 
-    # No hard floor — rely on calibrated non-linear transforms instead.
-    # The embedding transform is calibrated against SCOPe 2.08 so that
-    # general proteins (sim 0.90-0.96) score low while true toxin matches
-    # (sim 0.97+) score high.
+    # Structural confirmation boost: when Foldseek finds a real structural
+    # match (TM > 0.4) alongside high embedding, this is a strong signal
+    # that embedding alone can't provide. Boost to ensure detection.
+    if structural_sim is not None and structural_sim > 0.4 and embedding_sim > 0.95:
+        final_score = max(final_score, 0.55)
+        high_confidence_signals = max(high_confidence_signals, 2)
 
     # Generate explanation
     explanation = _generate_explanation(
