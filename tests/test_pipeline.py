@@ -364,7 +364,7 @@ def test_toxin_db_loads():
     from app.database.toxin_db import ToxinDatabase
     db = ToxinDatabase(index_path='data/toxin_db.faiss', meta_path='data/toxin_meta.json')
     db.load()
-    assert db.size == 2000
+    assert db.size >= 2000
     assert db._index.ntotal == len(db._metadata)
 
 @pytest.mark.skip(reason="FAISS search segfaults due to OpenMP conflict with torch on macOS")

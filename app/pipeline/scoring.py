@@ -163,10 +163,30 @@ def compute_score(
     final_score = min(1.0, raw_score + bonus)
 
     # Structural confirmation boost: when Foldseek finds a real structural
-    # match (TM > 0.4) alongside high embedding, this is a strong signal
-    # that embedding alone can't provide. Boost to ensure detection.
-    if structural_sim is not None and structural_sim > 0.4 and embedding_sim > 0.95:
-        final_score = max(final_score, 0.55)
+    # match alongside high embedding, this is a strong signal that embedding
+    # alone can't provide. Two paths to confirmation:
+    #
+    # 1. Global fold match (TM > 0.4): the whole protein is similar
+    # 2. Local geometry match (lDDT > 0.5): a region is locally similar,
+    #    even if the global fold differs. This catches chimeric proteins
+    #    where a toxic domain is embedded in a benign scaffold.
+    if structural_sim is not None and embedding_sim > 0.95:
+        if structural_sim > 0.4:
+            # Strong global structural match
+            final_score = max(final_score, 0.55)
+            high_confidence_signals = max(high_confidence_signals, 2)
+        elif active_site_overlap is not None and active_site_overlap > 0.5:
+            # Weak global match but strong local geometry — chimeric protein
+            final_score = max(final_score, 0.55)
+            high_confidence_signals = max(high_confidence_signals, 2)
+
+    # lDDT-based local similarity boost: catches chimeric proteins where
+    # TM-score is diluted by benign scaffold but lDDT shows local conservation.
+    # lDDT > 0.5 from Foldseek means significant local structural similarity
+    # to a known toxin, regardless of global fold.
+    if (active_site_overlap is not None and active_site_overlap > 0.5
+            and embedding_sim > 0.95 and final_score < 0.50):
+        final_score = 0.50
         high_confidence_signals = max(high_confidence_signals, 2)
 
     # Generate explanation
