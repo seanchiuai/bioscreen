@@ -55,7 +55,8 @@ def screen_sequence(
     payload = {
         "sequence": sequence,
         "sequence_id": sequence_id,
-        "top_k": top_k
+        "top_k": top_k,
+        "run_structure": True,
     }
 
     try:

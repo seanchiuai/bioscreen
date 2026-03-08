@@ -260,7 +260,7 @@ def _generate_explanation(
         else:
             details.append(f"low structural similarity ({structural_sim:.3f})")
     else:
-        details.append("structural analysis not performed")
+        details.append("structural similarity data unavailable")
 
     # Active site overlap
     if active_site_overlap is not None:
