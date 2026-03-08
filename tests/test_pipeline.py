@@ -1,3 +1,4 @@
+import sys
 import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
@@ -357,7 +358,7 @@ def test_toxin_db_loads():
     assert db.size == 2000
     assert db._index.ntotal == len(db._metadata)
 
-@pytest.mark.skip(reason="FAISS search segfaults on Python 3.14 due to SWIG ABI incompatibility")
+@pytest.mark.skip(reason="FAISS search segfaults due to OpenMP conflict with torch on macOS")
 def test_toxin_db_search():
     from app.database.toxin_db import ToxinDatabase
     db = ToxinDatabase(index_path='data/toxin_db.faiss', meta_path='data/toxin_meta.json')

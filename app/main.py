@@ -1,5 +1,11 @@
 """FastAPI application entry point for bioscreen."""
 
+import os
+
+# Prevent OpenMP conflict between torch and FAISS on macOS
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI

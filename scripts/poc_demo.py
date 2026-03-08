@@ -41,12 +41,16 @@ async def main():
     toxin = next(m for m in meta if m["uniprot_id"] == "A0S864")
     toxin_seq = toxin["sequence"]
 
-    # 2. Known benign: human insulin B chain
+    # 2. Known benign: human lysozyme (well-characterized, not a toxin, 130aa)
+    lysozyme_seq = "KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQINSRYWCNDGKTPGAVNACHLSCSALLQDNIADAVACAKRVVRDPQGIRAWVAWRNRCQNRDVRQYVQGCGV"
+
+    # 3. Known benign: human insulin B chain (short peptide)
     insulin_seq = "FVNQHLCGSHLVEALYLVCGERGFFYTPKT"
 
     test_cases = [
-        ("TOXIN (Irditoxin, snake venom)", toxin_seq),
-        ("BENIGN (Human insulin B chain)", insulin_seq),
+        ("TOXIN (Irditoxin, snake venom, 109aa)", toxin_seq),
+        ("BENIGN (Human lysozyme, 130aa)", lysozyme_seq),
+        ("BENIGN (Human insulin B chain, 30aa)", insulin_seq),
     ]
 
     for label, sequence in test_cases:
@@ -157,6 +161,7 @@ async def main():
             structural_sim=max_structure_sim,
             function_overlap=0.0,
             active_site_overlap=active_site_score,
+            sequence_length=len(sequence),
         )
 
         # Determine risk level

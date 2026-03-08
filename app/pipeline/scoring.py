@@ -17,6 +17,7 @@ def compute_score(
     structural_sim: Optional[float] = None,
     function_overlap: float = 0.0,
     active_site_overlap: Optional[float] = None,
+    sequence_length: Optional[int] = None,
 ) -> Tuple[float, str]:
     """Compute a unified risk score from multiple similarity metrics.
 
@@ -50,6 +51,14 @@ def compute_score(
     function_overlap = max(0.0, min(1.0, function_overlap))
     if active_site_overlap is not None:
         active_site_overlap = max(0.0, min(1.0, active_site_overlap))
+
+    # Short sequence penalty: ESM-2 embeddings are less discriminative for
+    # small peptides (<50 aa) because they cluster in embedding space.
+    # Reduce embedding weight and overall confidence for short sequences.
+    length_confidence = 1.0
+    if sequence_length is not None and sequence_length < 50:
+        length_confidence = max(0.3, sequence_length / 50.0)
+        embedding_sim = embedding_sim * length_confidence
 
     # Scoring weights - these can be tuned based on validation data
     # Full path with active site: embedding 0.35, structure 0.25, active_site 0.25, function 0.15
@@ -152,6 +161,7 @@ def compute_score(
         active_site_overlap=active_site_overlap,
         high_confidence_signals=high_confidence_signals,
         bonus=bonus,
+        length_confidence=length_confidence,
     )
 
     logger.debug(
@@ -172,6 +182,7 @@ def _generate_explanation(
     active_site_overlap: Optional[float] = None,
     high_confidence_signals: int = 0,
     bonus: float = 0.0,
+    length_confidence: float = 1.0,
 ) -> str:
     """Generate human-readable explanation of the risk score."""
     parts = []
@@ -232,6 +243,10 @@ def _generate_explanation(
         details.append(f"low functional overlap ({function_overlap:.3f})")
     else:
         details.append("no functional overlap detected")
+
+    # Short sequence note
+    if length_confidence < 1.0:
+        details.append(f"short sequence — reduced embedding confidence ({length_confidence:.0%})")
 
     # Synergy information
     if bonus > 0.05:

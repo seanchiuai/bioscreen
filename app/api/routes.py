@@ -219,6 +219,33 @@ async def screen_sequence(
         max_embedding_sim = similarity_result.max_embedding_sim
         max_structure_sim = similarity_result.max_structure_sim if request_data.run_structure else None
 
+        # Active site score: combine Foldseek lDDT (local geometry) with
+        # pocket-based RMSD comparison when structure is available
+        active_site_score = None
+        if request_data.run_structure and similarity_result.structure_hits:
+            # Foldseek lDDT captures local structural conservation
+            max_lddt = max(h.lddt for h in similarity_result.structure_hits)
+            active_site_score = max_lddt  # lDDT is already 0-1
+
+            # Refine with pocket RMSD if query structure available
+            if pdb_string:
+                try:
+                    from app.pipeline.active_site import compute_active_site_score
+                    from pathlib import Path
+                    target_pdbs = {}
+                    for hit in similarity_result.structure_hits[:5]:
+                        pdb_path = Path(f"data/toxin_structures/{hit.target_id}.pdb")
+                        if pdb_path.exists():
+                            target_pdbs[hit.target_id] = pdb_path.read_text()
+                    if target_pdbs:
+                        site_matches = compute_active_site_score(pdb_string, target_pdbs, top_k=3)
+                        if site_matches:
+                            pocket_score = site_matches[0].overlap_score
+                            # Combine: 60% lDDT + 40% pocket RMSD
+                            active_site_score = 0.6 * max_lddt + 0.4 * pocket_score
+                except Exception as e:
+                    logger.warning(f"Active site comparison failed: {e}")
+
         # Calculate function overlap (simplified)
         function_overlap = 0.0
         if top_matches and function_prediction.go_terms:
@@ -233,6 +260,8 @@ async def screen_sequence(
             embedding_sim=max_embedding_sim,
             structural_sim=max_structure_sim,
             function_overlap=function_overlap,
+            active_site_overlap=active_site_score,
+            sequence_length=len(request_data.sequence),
         )
 
         # Determine risk level
