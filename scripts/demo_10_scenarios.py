@@ -39,10 +39,10 @@ def section(num, title):
     print(f"{'='*70}")
 
 
-def scramble_sequence(sequence: str, mutation_rate: float = 0.7) -> str:
-    amino_acids = "ADEFGHIKLMNPQRSTVWY"
+def scramble_sequence(sequence: str, mutation_rate: float = 0.7, preserve_cys: bool = True) -> str:
+    amino_acids = "ACDEFGHIKLMNPQRSTVWY"
     return "".join(
-        aa if aa == "C" or random.random() > mutation_rate
+        aa if (preserve_cys and aa == "C" and random.random() > 0.5) or random.random() > mutation_rate
         else random.choice(amino_acids)
         for aa in sequence
     )
@@ -52,6 +52,40 @@ def compute_identity(s1, s2):
     if len(s1) != len(s2):
         return 0.0
     return sum(a == b for a, b in zip(s1, s2)) / len(s1)
+
+
+def run_blast(seq: str) -> str:
+    """Run actual BLAST against toxin DB. Returns result string."""
+    import subprocess, tempfile
+    blast_db = "/tmp/toxin_blastdb"
+    # Build DB if not exists
+    if not os.path.exists(blast_db + ".pdb"):
+        with open("/tmp/toxin_blast.fasta", "w") as f:
+            with open("data/toxin_meta.json") as mf:
+                for m in json.load(mf):
+                    f.write(f">{m['uniprot_id']}\n{m['sequence']}\n")
+        subprocess.run(["makeblastdb", "-in", "/tmp/toxin_blast.fasta",
+                        "-dbtype", "prot", "-out", blast_db],
+                       capture_output=True)
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".fasta", delete=False) as f:
+        f.write(f">query\n{seq}\n")
+        qpath = f.name
+
+    result = subprocess.run(
+        ["blastp", "-query", qpath, "-db", blast_db,
+         "-outfmt", "6 sseqid pident evalue", "-max_target_seqs", "1", "-evalue", "10"],
+        capture_output=True, text=True,
+    )
+    os.unlink(qpath)
+
+    if result.stdout.strip():
+        parts = result.stdout.strip().split("\n")[0].split("\t")
+        pident = float(parts[1])
+        evalue = float(parts[2])
+        flagged = evalue < 0.01
+        return f"{'FLAGGED' if flagged else 'MISSED'} ({pident:.0f}% id, E={evalue:.1e})"
+    return "MISSED (no hit)"
 
 
 async def screen(sequence, model, db, settings, run_structure=True):
@@ -155,31 +189,37 @@ async def main():
     # ── 1. Known scorpion toxin ─────────────────────────────────
     section(1, "Known Scorpion Toxin (Androctonus australis)")
     print(f"  {scorpion['name']}, {scorpion['sequence_length']}aa")
+    blast_res = run_blast(scorpion["sequence"])
     r = await screen(scorpion["sequence"], model, db, settings)
-    print_result(r, blast_result="✅ Caught (100% identity)")
-    results_summary.append(("Known scorpion toxin", "✅", "✅" if r['level'] != "LOW" else "❌"))
+    print(f"  BLAST: {blast_res}")
+    print_result(r)
+    results_summary.append(("Known scorpion toxin", "✅" if "FLAGGED" in blast_res else "❌", "✅" if r['level'] != "LOW" else "❌"))
 
-    # ── 2. AI-redesigned snake venom (70% mutated) ──────────────
-    section(2, "AI-Redesigned Snake Venom (70% mutated)")
+    # ── 2. AI-redesigned snake venom (80% mutated) ──────────────
+    section(2, "AI-Redesigned Snake Venom (80% mutated)")
     random.seed(42)
-    evasion_snake = scramble_sequence(snake["sequence"], 0.70)
+    evasion_snake = scramble_sequence(snake["sequence"], 0.80, preserve_cys=False)
     ident = compute_identity(snake["sequence"], evasion_snake)
+    blast_res = run_blast(evasion_snake)
     print(f"  Original: {snake['name']}, {snake['sequence_length']}aa")
-    print(f"  Identity: {ident:.0%} (BLAST threshold: ~30%)")
+    print(f"  Identity: {ident:.0%}")
+    print(f"  BLAST: {blast_res}")
     r = await screen(evasion_snake, model, db, settings)
-    print_result(r, blast_result=f"❌ Missed ({ident:.0%} identity)")
-    results_summary.append(("AI-redesigned snake venom", "❌", "✅" if r['level'] != "LOW" else "❌"))
+    print_result(r)
+    results_summary.append(("AI-redesigned snake venom", "❌" if "MISSED" in blast_res else "✅", "✅" if r['level'] != "LOW" else "❌"))
 
-    # ── 3. AI-redesigned anemone toxin (80% mutated) ────────────
-    section(3, "AI-Redesigned Sea Anemone Toxin (80% mutated)")
+    # ── 3. AI-redesigned irditoxin (80% mutated) ────────────────
+    section(3, "AI-Redesigned Irditoxin (80% mutated)")
     random.seed(77)
-    evasion_anemone = scramble_sequence(anemone["sequence"], 0.80)
-    ident = compute_identity(anemone["sequence"], evasion_anemone)
-    print(f"  Original: {anemone['name']}, {anemone['sequence_length']}aa")
-    print(f"  Identity: {ident:.0%} — extreme evasion")
-    r = await screen(evasion_anemone, model, db, settings)
-    print_result(r, blast_result=f"❌ Missed ({ident:.0%} identity)")
-    results_summary.append(("AI-redesigned anemone toxin", "❌", "✅" if r['level'] != "LOW" else "❌"))
+    evasion_irdi = scramble_sequence(irditoxin["sequence"], 0.80, preserve_cys=False)
+    ident = compute_identity(irditoxin["sequence"], evasion_irdi)
+    blast_res = run_blast(evasion_irdi)
+    print(f"  Original: {irditoxin['name']}, {irditoxin['sequence_length']}aa")
+    print(f"  Identity: {ident:.0%}")
+    print(f"  BLAST: {blast_res}")
+    r = await screen(evasion_irdi, model, db, settings)
+    print_result(r)
+    results_summary.append(("AI-redesigned irditoxin", "❌" if "MISSED" in blast_res else "✅", "✅" if r['level'] != "LOW" else "❌"))
 
     # ── 4. Human lysozyme (benign) ──────────────────────────────
     section(4, "Human Lysozyme (benign enzyme)")
@@ -210,18 +250,22 @@ async def main():
     # Remove first ~20aa signal peptide
     mature_spider = spider["sequence"][20:]
     print(f"  {spider['name']}, {len(mature_spider)}aa (signal peptide removed)")
+    blast_res = run_blast(mature_spider)
     r = await screen(mature_spider, model, db, settings)
-    print_result(r, blast_result="✅ Caught (high identity to known)")
-    results_summary.append(("Spider toxin (mature)", "✅", "✅" if r['level'] != "LOW" else "❌"))
+    print(f"  BLAST: {blast_res}")
+    print_result(r)
+    results_summary.append(("Spider toxin (mature)", "✅" if "FLAGGED" in blast_res else "❌", "✅" if r['level'] != "LOW" else "❌"))
 
     # ── 8. Chimeric protein (half toxin + half benign) ──────────
     section(8, "Chimeric Protein (toxin + GFP fusion)")
     chimera = irditoxin["sequence"][:55] + gfp[100:155]
     print(f"  {len(chimera)}aa — first half is toxin, second half is GFP")
     print(f"  Represents partial toxin domain embedded in benign scaffold")
+    blast_res = run_blast(chimera)
     r = await screen(chimera, model, db, settings)
-    print_result(r, blast_result="⚠️ Partial match (confusing)")
-    results_summary.append(("Chimeric toxin+GFP", "⚠️", "✅" if r['level'] != "LOW" else "❌"))
+    print(f"  BLAST: {blast_res}")
+    print_result(r)
+    results_summary.append(("Chimeric toxin+GFP", "✅" if "FLAGGED" in blast_res else "❌", "✅" if r['level'] != "LOW" else "❌"))
 
     # ── 9. Convergent optimization attack ───────────────────────
     section(9, "Convergent Optimization Attack (session monitoring)")
