@@ -14,6 +14,8 @@ import requests
 import streamlit as st
 import streamlit.components.v1 as components
 
+from video_generator import ProteinVideoData, generate_video
+
 
 # Configuration
 API_BASE_URL = "http://localhost:8000/api"
@@ -411,6 +413,7 @@ def render_summary_cards(data: dict) -> None:
 
 
 def main():
+    """Main Streamlit application."""
     st.set_page_config(
         page_title="BioScreen",
         page_icon="🧬",
@@ -488,7 +491,7 @@ def main():
             "Screen Sequence",
             type="primary",
             disabled=not sequence_input.strip(),
-            width="stretch",
+            use_container_width=True,
         )
 
     # Validation feedback
@@ -529,14 +532,16 @@ def main():
     data = st.session_state.last_result
     if data:
         st.divider()
-        render_summary_cards(data)
 
         # Tabbed detail area
         has_structure = data.get("pdb_string") is not None
-        tab_labels = ["Matches", "Structure", "Score Breakdown", "Function", "Explain"]
+        tab_labels = ["Overview", "Matches", "Structure", "Score Breakdown", "Function", "Explain"]
         tabs = st.tabs(tab_labels)
 
         with tabs[0]:
+            render_summary_cards(data)
+
+        with tabs[1]:
             if data.get("top_matches"):
                 matches_data = []
                 for i, match in enumerate(data["top_matches"], 1):
@@ -567,11 +572,11 @@ def main():
                     df["Structure Sim"] = "\u2014"
                     col_config["Structure Sim"] = st.column_config.TextColumn("Structure Sim")
 
-                st.dataframe(df, column_config=col_config, width="stretch", hide_index=True)
+                st.dataframe(df, column_config=col_config, use_container_width=True, hide_index=True)
             else:
                 st.info("No significant matches found.")
 
-        with tabs[1]:
+        with tabs[2]:
             pdb_string = data.get("pdb_string")
             if pdb_string:
                 col_view, col_color = st.columns(2)
@@ -640,7 +645,7 @@ def main():
             else:
                 st.info("Structure analysis was not run. Enable 'Structure analysis' and re-screen to see the 3D viewer.")
 
-        with tabs[2]:
+        with tabs[3]:
             factors = data.get("risk_factors", {})
             emb_sim = factors.get("max_embedding_similarity", 0)
             struct_sim = factors.get("max_structure_similarity")
@@ -698,7 +703,7 @@ def main():
 
             st.markdown(f"**Final Score: {risk_score:.3f}**")
 
-        with tabs[3]:
+        with tabs[4]:
             function_pred = data.get("function_prediction")
             if function_pred:
                 summary = function_pred.get("summary", "")
@@ -752,7 +757,7 @@ def main():
             else:
                 st.info("No function prediction available.")
 
-        with tabs[4]:
+        with tabs[5]:
             risk_score = data["risk_score"]
             risk_level = data["risk_level"]
             factors = data.get("risk_factors", {})
@@ -806,6 +811,51 @@ def main():
         with col_json:
             if st.button("Copy JSON", key="copy_json"):
                 st.code(json.dumps(data, indent=2), language="json")
+
+        # Video generation
+        if data.get("pdb_string"):
+            st.markdown("---")
+            st.markdown(
+                '<div style="text-align:center; margin: 1rem 0 0.5rem 0;">'
+                '<span style="color:#94a3b8; font-size:0.85rem;">'
+                'Generate an MP4 video showing the 3D structure rotating with risk annotations and stats overlay'
+                '</span></div>',
+                unsafe_allow_html=True,
+            )
+            col_l, col_btn, col_r = st.columns([1, 2, 1])
+            with col_btn:
+                generate_clicked = st.button(
+                    "Generate Video Analysis",
+                    key="gen_video",
+                    use_container_width=True,
+                    type="primary",
+                )
+            if generate_clicked:
+                video_input = ProteinVideoData(
+                    pdb_string=data["pdb_string"],
+                    risk_score=data["risk_score"],
+                    risk_level=data["risk_level"],
+                    sequence_length=data.get("sequence_length", 0),
+                    top_matches=data.get("top_matches", []),
+                    pocket_residues=data.get("pocket_residues", []),
+                    danger_residues=data.get("danger_residues", []),
+                    risk_factors=data.get("risk_factors", {}),
+                    structure_predicted=data.get("structure_predicted", False),
+                    function_prediction=data.get("function_prediction"),
+                )
+                with st.spinner("Rendering video... this may take 30-90 seconds"):
+                    try:
+                        video_bytes = generate_video(video_input)
+                        st.video(video_bytes, format="video/mp4")
+                        st.download_button(
+                            label="Download Video",
+                            data=video_bytes,
+                            file_name="bioscreen_analysis.mp4",
+                            mime="video/mp4",
+                            use_container_width=True,
+                        )
+                    except Exception as e:
+                        st.error(f"Video generation failed: {e}")
 
     # Footer
     st.divider()
