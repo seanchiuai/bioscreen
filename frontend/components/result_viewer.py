@@ -2,14 +2,12 @@
 
 import html as _html
 import json
-import requests
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
 from components.summary_cards import render_summary_cards
 from components.protein_3d import render_protein_3d, _aligned_residue_set
-from components.api_client import API_BASE_URL
 
 try:
     from video_generator import ProteinVideoData, generate_video
@@ -97,52 +95,9 @@ def render_results(data: dict, key_prefix: str = "") -> None:
             danger_res = data.get("danger_residues", [])
             aligned_regions = data.get("aligned_regions", [])
 
-            # Structural comparison toggle
             overlay_pdb = None
             overlay_name = ""
-            compare_data = st.session_state.get("compare_result")
-            top_matches = data.get("top_matches", [])
-
-            if top_matches:
-                top_match = top_matches[0]
-                match_name = top_match.get("name", "Unknown")
-                match_id = top_match.get("uniprot_id", "")
-
-                show_compare = st.toggle(
-                    f"Compare with: {match_name} ({match_id})",
-                    key=f"{key_prefix}show_compare",
-                    help="Overlay the matched toxin structure (fetched from AlphaFold DB) for visual comparison",
-                )
-
-                if show_compare:
-                    # Fetch and align if not already cached for this toxin
-                    cached_id = st.session_state.get("compare_target_id")
-                    if compare_data and cached_id == match_id:
-                        overlay_pdb = compare_data.get("target_pdb")
-                        overlay_name = compare_data.get("target_name", match_name)
-                    else:
-                        with st.spinner(f"Fetching and aligning {match_name} from AlphaFold DB..."):
-                            try:
-                                resp = requests.post(
-                                    f"{API_BASE_URL}/compare",
-                                    json={
-                                        "query_pdb": pdb_string,
-                                        "target_uniprot_id": match_id,
-                                    },
-                                    timeout=60,
-                                )
-                                if resp.status_code == 200:
-                                    compare_data = resp.json()
-                                    st.session_state.compare_result = compare_data
-                                    st.session_state.compare_target_id = match_id
-                                    overlay_pdb = compare_data.get("target_pdb")
-                                    overlay_name = compare_data.get("target_name", match_name)
-                                elif resp.status_code == 404:
-                                    st.warning(f"No AlphaFold structure available for {match_name} ({match_id}).")
-                                else:
-                                    st.warning(f"Comparison failed: {resp.text}")
-                            except requests.exceptions.RequestException as e:
-                                st.warning(f"Could not reach comparison API: {e}")
+            compare_data = None
 
             render_protein_3d(
                 pdb_string=pdb_string,

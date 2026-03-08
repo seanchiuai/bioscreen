@@ -275,12 +275,14 @@ async def screen_sequence(
                 except Exception as e:
                     logger.warning(f"Active site comparison failed: {e}")
 
-        # Calculate function overlap (simplified)
+        # Calculate function overlap
+        # DB stores GO terms as "GO:0005576:C:extracellular region" — extract just the ID prefix
         function_overlap = 0.0
         if top_matches and function_prediction.go_terms:
             query_go_set = {term["term"] for term in function_prediction.go_terms}
-            for match in top_matches[:3]:  # Check top 3 matches
-                match_go_set = set(match.go_terms)
+            for match in top_matches[:3]:
+                # Normalize DB go_terms: "GO:0005576:C:..." → "GO:0005576"
+                match_go_set = {t.split(":")[0] + ":" + t.split(":")[1] if ":" in t else t for t in match.go_terms}
                 if query_go_set and match_go_set:
                     overlap = len(query_go_set & match_go_set) / len(query_go_set | match_go_set)
                     function_overlap = max(function_overlap, overlap)
