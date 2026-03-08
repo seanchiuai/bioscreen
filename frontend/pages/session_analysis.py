@@ -65,7 +65,7 @@ def page() -> None:
     st.caption("Screen multiple sequences sequentially and monitor for behavioral patterns.")
 
     health = check_api_health()
-    if health.get("status") == "healthy":
+    if health.get("status") == "ok":
         st.success("API status: **online**", icon=":material/check_circle:")
     else:
         msg = health.get("message", "unknown error")
@@ -173,7 +173,7 @@ def page() -> None:
             data = res["data"]
             risk_score = data.get("risk_score", 0)
             risk_level = data.get("risk_level", "unknown")
-            matches = data.get("matches", [])
+            matches = data.get("top_matches", [])
             top_match = matches[0]["name"] if matches else "—"
             rows.append(
                 {
@@ -241,9 +241,12 @@ def page() -> None:
 
     # 5d — Expandable per-sequence detail
     st.subheader("Per-Sequence Detail")
-    for label, res in results:
+    for idx, (label, res) in enumerate(results):
         with st.expander(label):
             if res.get("success") and res.get("data"):
-                render_results(res["data"])
+                render_results(res["data"], key_prefix=f"sa_{idx}_")
             else:
                 st.error(res.get("error", "Screening failed for this sequence."))
+
+
+page()

@@ -127,3 +127,6 @@ def page():
         '</div>',
         unsafe_allow_html=True,
     )
+
+
+page()

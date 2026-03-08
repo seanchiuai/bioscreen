@@ -1,5 +1,6 @@
 """Shared 6-tab result display for BioScreen screening results."""
 
+import html as _html
 import json
 import requests
 import pandas as pd
@@ -17,15 +18,17 @@ except ImportError:
     _VIDEO_AVAILABLE = False
 
 
-def render_results(data: dict) -> None:
+def render_results(data: dict, key_prefix: str = "") -> None:
     """Render the full tabbed results section for a screening result.
 
     Parameters
     ----------
     data : dict
         The screening result dict (from the API ``/api/screen`` response).
+    key_prefix : str
+        Optional prefix for widget keys to avoid collisions when rendering
+        multiple results on the same page (e.g. in session analysis expanders).
     """
-    st.divider()
 
     # Tabbed detail area
     has_structure = data.get("pdb_string") is not None
@@ -80,13 +83,13 @@ def render_results(data: dict) -> None:
             with col_view:
                 view_style = st.radio(
                     "View", ["Cartoon", "Surface", "Stick"],
-                    horizontal=True, key="view_style",
+                    horizontal=True, key=f"{key_prefix}view_style",
                 )
             with col_color:
                 color_options = ["Default", "pLDDT", "Risk Layers"]
                 color_mode = st.radio(
                     "Color", color_options,
-                    horizontal=True, key="color_mode",
+                    horizontal=True, key=f"{key_prefix}color_mode",
                     help="Risk Layers: gray=no match, yellow=structurally aligned to toxin, orange=pocket, red=active site match",
                 )
 
@@ -107,7 +110,7 @@ def render_results(data: dict) -> None:
 
                 show_compare = st.toggle(
                     f"Compare with: {match_name} ({match_id})",
-                    key="show_compare",
+                    key=f"{key_prefix}show_compare",
                     help="Overlay the matched toxin structure (fetched from AlphaFold DB) for visual comparison",
                 )
 
@@ -168,7 +171,6 @@ def render_results(data: dict) -> None:
 
                 # Framing: explain fold-level vs residue-level risk
                 if danger_res or aligned_res:
-                    import html as _html
                     top_match = data.get("top_matches", [{}])[0] if data.get("top_matches") else {}
                     match_name = _html.escape(top_match.get("name", "a known toxin"))
                     st.markdown(f"""
@@ -390,7 +392,7 @@ def render_results(data: dict) -> None:
     # Copy JSON button
     col_spacer, col_json = st.columns([5, 1])
     with col_json:
-        if st.button("Copy JSON", key="copy_json"):
+        if st.button("Copy JSON", key=f"{key_prefix}copy_json"):
             st.code(json.dumps(data, indent=2), language="json")
 
     # Video generation
@@ -407,7 +409,7 @@ def render_results(data: dict) -> None:
         with col_btn:
             generate_clicked = st.button(
                 "Generate Video Analysis",
-                key="gen_video",
+                key=f"{key_prefix}gen_video",
                 use_container_width=True,
                 type="primary",
             )
