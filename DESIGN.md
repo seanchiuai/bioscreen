@@ -1,5 +1,7 @@
 # BioScreen Demo — Frontend Visualization Design
 
+> **Note:** `FRONTEND_GUIDE.md` is the source of truth for API details, request/response formats, and demo sequences. This document covers the visual design and 3D viewer implementation only.
+
 ## Goal
 Show a screened protein's 3D structure with dangerous regions highlighted. No folding animation, no side-by-side superposition. Single structure, clear visual signal.
 
@@ -116,7 +118,7 @@ def render_protein_3d(pdb_string, pocket_residues, danger_residues, view_style="
 - `st.radio()` for color mode: Default (blue/orange/red) | pLDDT Confidence
 
 ### Risk Gauge
-- Simple colored metric: green < 0.5 < orange < 0.7 < red
+- Simple colored metric: green (0–0.44 LOW) | orange (0.45–0.74 MEDIUM) | red (0.75–1.0 HIGH)
 - Use `st.metric()` with custom HTML for the color bar
 
 ---
@@ -131,20 +133,28 @@ That's it. py3Dmol has no heavy deps — it just generates HTML/JS for 3Dmol.js.
 
 ---
 
-## Demo Script (suggested flow)
+## Demo Script (4 sequences, ~60 seconds)
 
-1. **Start with insulin** (known safe) → LOW risk, structure is blue, no red highlights
-2. **Paste a novel AI-designed sequence** that mimics botulinum toxin structure → HIGH risk, red active site highlights appear
-3. **Show the same sequence passes traditional BLAST** (low sequence similarity) → "This is what BioScreen catches that others miss"
-4. **Submit a few more variants** → session monitoring kicks in, anomaly score rises → "We also detect when someone is iterating toward a dangerous structure"
+See `FRONTEND_GUIDE.md` for full sequences and expected results. See also `scripts/demo_scenarios.py` and `scripts/demo_10_scenarios.py` for pre-built sequences.
+
+1. **Insulin B Chain** (known safe) → LOW risk (~0.13), structure is blue, no red highlights. _"The system correctly clears it."_
+2. **Scorpion Toxin Aah4** (known toxin, UniProt P45658) → HIGH risk (1.0), red active site highlights. _"Any screening tool catches this."_
+3. **AI-Designed Evasion** (Irditoxin scrambled at 70% mutation, cysteines preserved) → MEDIUM-HIGH risk, Foldseek finds structural match despite <40% sequence identity. _"BLAST says it's safe. BioScreen's structure analysis finds it folds into a snake venom shape."_
+4. **Session Monitoring** — Submit 3-4 variants of sequence 3 with `X-Session-Id: demo-session`. Per-sequence risk stays MEDIUM, but session anomaly score climbs 0.0 → 0.3 → 0.5 → 0.8. _"Each query alone looks borderline. But the session monitor detects someone iterating toward a dangerous design."_
 
 ---
 
 ## Implementation Order
 
 1. Add `py3Dmol` to requirements.txt
-2. Extend schema + route to return PDB + residue data
+2. Extend schema + route to return PDB + residue data (see `FRONTEND_GUIDE.md` § "Backend Changes Needed")
 3. Build the 3D viewer function
 4. Redesign Streamlit layout per the wireframe above
 5. Add view/color toggles
 6. Test with real ESMFold output
+
+---
+
+## Related Docs
+
+- **`FRONTEND_GUIDE.md`** — API endpoints, request/response formats, error states, performance expectations, and pre-built demo sequences
