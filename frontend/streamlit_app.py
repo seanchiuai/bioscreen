@@ -79,12 +79,12 @@ def screen_sequence(
 
 
 def _aligned_residue_set(aligned_regions: list[list[int]]) -> list[int]:
-    """Expand [start, end] pairs into a flat list of residue indices."""
-    residues = []
+    """Expand [start, end] pairs into a deduplicated sorted list of residue indices."""
+    residues: set[int] = set()
     for region in aligned_regions:
         if len(region) == 2:
-            residues.extend(range(region[0], region[1] + 1))
-    return residues
+            residues.update(range(region[0], region[1] + 1))
+    return sorted(residues)
 
 
 def render_protein_3d(
@@ -617,8 +617,9 @@ def main():
 
                     # Framing: explain fold-level vs residue-level risk
                     if danger_res or aligned_res:
+                        import html as _html
                         top_match = data.get("top_matches", [{}])[0] if data.get("top_matches") else {}
-                        match_name = top_match.get("name", "a known toxin")
+                        match_name = _html.escape(top_match.get("name", "a known toxin"))
                         st.markdown(f"""
                         <div class="recommend-box" style="margin-top: 0.5rem;">
                             <strong>Interpreting this view:</strong> The yellow regions show where this protein's

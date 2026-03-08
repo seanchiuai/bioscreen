@@ -231,10 +231,11 @@ async def screen_sequence(
             max_lddt = max(h.lddt for h in similarity_result.structure_hits)
             active_site_score = max_lddt  # lDDT is already 0-1
 
-            # Extract aligned regions from top Foldseek hits (1-indexed for PDB residue numbering)
+            # Extract aligned regions from top Foldseek hits
+            # Foldseek qstart/qend are 0-indexed; convert to 1-indexed for PDB residue numbering
             for hit in similarity_result.structure_hits[:3]:
-                if hit.qstart > 0 and hit.qend > 0 and hit.qend >= hit.qstart:
-                    aligned_regions.append([hit.qstart, hit.qend])
+                if hit.qend >= hit.qstart:
+                    aligned_regions.append([hit.qstart + 1, hit.qend + 1])
 
             # Refine with pocket RMSD if query structure available
             if pdb_string:
