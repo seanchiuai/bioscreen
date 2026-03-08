@@ -501,8 +501,8 @@ def render_results(data: dict, key_prefix: str = "") -> None:
                 )
             st.markdown(active_paragraph)
 
-        # Function overlap explanation
-        if func_overlap > 0:
+        # Function overlap explanation — only shown once InterPro result is ready
+        if real_fn is not None:
             if func_overlap >= 0.6:
                 func_paragraph = (
                     f"**Functional Annotation Overlap ({func_overlap:.3f}):** The predicted Gene Ontology "
@@ -519,20 +519,19 @@ def render_results(data: dict, key_prefix: str = "") -> None:
                     f"function, though it could also reflect broadly conserved activities common to many "
                     f"protein families."
                 )
-            else:
+            elif func_overlap > 0:
                 func_paragraph = (
                     f"**Functional Annotation Overlap ({func_overlap:.3f}):** There is minimal overlap "
                     f"between the predicted functional annotations of this protein and those of known "
                     f"toxins. The protein appears to have a different predicted biological role."
                 )
+            else:
+                func_paragraph = (
+                    "**Functional Annotation Overlap (0.000):** No overlap was detected between the "
+                    "predicted functional annotations (GO terms and EC numbers) of this protein and "
+                    "those of any known toxin in the reference database."
+                )
             st.markdown(func_paragraph)
-        else:
-            st.markdown(
-                "**Functional Annotation Overlap (0.000):** No overlap was detected between the predicted "
-                "functional annotations (GO terms and EC numbers) of this protein and those of any "
-                "known toxin in the reference database. This suggests the protein is predicted to "
-                "serve a different biological function."
-            )
 
         # Short sequence note
         if seq_length and seq_length < 50:
