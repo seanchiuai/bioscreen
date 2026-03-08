@@ -261,16 +261,214 @@ def render_session_monitor(data: dict) -> None:
         )
 
 
+def inject_custom_css() -> None:
+    st.markdown("""
+    <style>
+    .summary-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    .summary-card h3 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .risk-low { color: #22c55e; }
+    .risk-medium { color: #f59e0b; }
+    .risk-high { color: #ef4444; }
+    .risk-bar-bg {
+        background: #e2e8f0;
+        border-radius: 6px;
+        height: 14px;
+        overflow: hidden;
+        margin-top: 6px;
+    }
+    .risk-bar-fill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.3s;
+    }
+    .api-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        color: #475569;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 2px 10px;
+    }
+    .api-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .api-dot-ok { background: #22c55e; }
+    .api-dot-err { background: #ef4444; }
+    .score-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .score-bar-label {
+        width: 160px;
+        font-size: 0.85rem;
+        color: #475569;
+        text-align: right;
+        flex-shrink: 0;
+    }
+    .score-bar-track {
+        flex: 1;
+        background: #e2e8f0;
+        border-radius: 4px;
+        height: 20px;
+        overflow: hidden;
+    }
+    .score-bar-value {
+        height: 100%;
+        border-radius: 4px;
+        background: #6366f1;
+    }
+    .score-bar-num {
+        width: 50px;
+        font-size: 0.85rem;
+        color: #334155;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    .verdict-box {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.05rem;
+        margin-bottom: 1rem;
+    }
+    .verdict-low { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .verdict-medium { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .verdict-high { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .recommend-box {
+        background: #f8fafc;
+        border-left: 3px solid #6366f1;
+        padding: 0.75rem 1rem;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.9rem;
+        color: #334155;
+        margin-top: 1rem;
+    }
+    .func-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+    .func-card-id {
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: #6366f1;
+    }
+    .func-card-name {
+        font-size: 0.9rem;
+        color: #1e293b;
+        font-weight: 500;
+    }
+    .conf-bar-bg {
+        background: #e2e8f0;
+        border-radius: 3px;
+        height: 6px;
+        margin-top: 4px;
+        overflow: hidden;
+    }
+    .conf-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: #6366f1;
+    }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .block-container { padding-top: 2rem; }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+def render_summary_cards(data: dict) -> None:
+    risk_score = data["risk_score"]
+    risk_level = data["risk_level"]
+
+    if risk_score < 0.45:
+        bar_color, level_class = "#22c55e", "risk-low"
+    elif risk_score < 0.75:
+        bar_color, level_class = "#f59e0b", "risk-medium"
+    else:
+        bar_color, level_class = "#ef4444", "risk-high"
+
+    top_match = data.get("top_matches", [{}])[0] if data.get("top_matches") else {}
+    match_name = top_match.get("name", "No match")
+    match_org = top_match.get("organism", "")
+    emb_sim = top_match.get("embedding_similarity", 0)
+    str_sim = top_match.get("structure_similarity")
+    best_sim = max(emb_sim, str_sim or 0)
+    sim_label = "structure" if (str_sim and str_sim >= emb_sim) else "embedding"
+
+    structure_ran = data.get("structure_predicted", False)
+    mode_label = "Full" if structure_ran else "Fast"
+    mode_detail = "Embedding + Structure + Function" if structure_ran else "Embedding + Function"
+
+    pct = int(risk_score * 100)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown(f"""
+        <div class="summary-card">
+            <h3>Risk Score</h3>
+            <div style="font-size:2.2rem; font-weight:700; color:{bar_color};">{risk_score:.3f}</div>
+            <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:{pct}%; background:{bar_color};"></div></div>
+            <div style="margin-top:6px;">
+                <span class="{level_class}" style="font-weight:700; font-size:0.95rem;">{risk_level}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"""
+        <div class="summary-card">
+            <h3>Top Match</h3>
+            <div style="font-size:1.1rem; font-weight:600; color:#1e293b; margin-bottom:2px;">{match_name}</div>
+            <div style="font-size:0.8rem; color:#64748b; margin-bottom:6px;">{match_org}</div>
+            <div style="font-size:1.3rem; font-weight:700; color:#334155;">{best_sim:.3f}
+                <span style="font-size:0.75rem; font-weight:400; color:#94a3b8;">({sim_label})</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"""
+        <div class="summary-card">
+            <h3>Screening Mode</h3>
+            <div style="font-size:1.3rem; font-weight:700; color:#334155;">{mode_label}</div>
+            <div style="font-size:0.85rem; color:#64748b; margin-top:4px;">{mode_detail}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
 def main():
-    """Main Streamlit application."""
     st.set_page_config(
-        page_title="BioScreen - Protein Toxin Screening",
+        page_title="BioScreen",
         page_icon="🧬",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed"
     )
 
-    # Persistent state
+    inject_custom_css()
+
     if "session_id" not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
     if "query_count" not in st.session_state:
@@ -278,110 +476,92 @@ def main():
     if "last_result" not in st.session_state:
         st.session_state.last_result = None
 
-    st.title("🧬 BioScreen - Protein Toxin Screening")
-    st.markdown("**Structure-based biosecurity screening for AI-designed proteins**")
+    # Header with API status pill
+    health = check_api_health()
+    api_ok = health.get("status") == "ok"
+    dot_class = "api-dot-ok" if api_ok else "api-dot-err"
+    api_text = "API Connected" if api_ok else "API Unavailable"
 
-    # ── Sidebar ──────────────────────────────────────────────
-    with st.sidebar:
-        st.header("⚙️ Settings")
+    col_title, col_status = st.columns([4, 1])
+    with col_title:
+        st.markdown("# BioScreen")
+        st.markdown("Structure-based biosecurity screening for AI-designed proteins")
+    with col_status:
+        st.markdown(
+            f'<div style="text-align:right; margin-top:1.5rem;">'
+            f'<span class="api-pill"><span class="api-dot {dot_class}"></span>{api_text}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    if not api_ok:
+        st.error(f"Cannot reach API: {health.get('message', 'Unknown error')}")
+        st.stop()
 
-        st.subheader("API Status")
-        health = check_api_health()
+    # Input strip
+    col_seq, col_controls = st.columns([3, 2])
 
-        if health["status"] == "ok":
-            st.success("✅ API is healthy")
-            st.write(f"**Version:** {health.get('version', 'Unknown')}")
-            st.write(f"**Database Loaded:** {'✅' if health.get('toxin_db_loaded') else '❌'}")
-            st.write(f"**ESM-2 Loaded:** {'✅' if health.get('esm2_loaded') else '❌'}")
-            st.write(f"**Foldseek Available:** {'✅' if health.get('foldseek_available') else '❌'}")
-        else:
-            st.error(f"❌ API unavailable: {health.get('message', 'Unknown error')}")
-            st.stop()
-
-        st.divider()
-
-        st.subheader("Screening Options")
-        run_structure = st.checkbox(
-            "Run Structure Analysis",
-            value=False,
-            help="Include ESMFold structure prediction and Foldseek comparison (slower but more accurate)"
+    with col_seq:
+        sequence_input = st.text_area(
+            "Protein Sequence",
+            height=100,
+            placeholder="Paste protein sequence here (FASTA headers auto-stripped)...",
+            value=getattr(st.session_state, "example_sequence", ""),
+            label_visibility="collapsed",
+        )
+        sequence_id = st.text_input(
+            "Sequence ID",
+            placeholder="Optional sequence ID",
+            label_visibility="collapsed",
         )
 
-        top_k = st.slider(
-            "Number of Top Matches",
-            min_value=1,
-            max_value=20,
-            value=5,
-            help="Number of top similar toxins to display"
-        )
-
-        st.divider()
-        st.subheader("Demo Sequences")
+    with col_controls:
         demo_choice = st.selectbox(
-            "Load a demo sequence",
+            "Demo sequence",
             options=list(DEMO_SEQUENCES.keys()),
-            help="Select a pre-built sequence to load into the input area"
+            label_visibility="collapsed",
         )
         if DEMO_SEQUENCES.get(demo_choice):
             st.session_state.example_sequence = DEMO_SEQUENCES[demo_choice]
 
-    # ── Top section: Input (left) + Risk gauge (right) ───────
-    col_input, col_gauge = st.columns([3, 2])
+        c1, c2 = st.columns(2)
+        with c1:
+            run_structure = st.toggle(
+                "Structure analysis",
+                value=False,
+                help="Include ESMFold + Foldseek (slower, more accurate)",
+            )
+        with c2:
+            top_k = st.number_input("Top K", min_value=1, max_value=20, value=5, label_visibility="collapsed")
 
-    with col_input:
-        st.subheader("📝 Sequence Input")
-        sequence_input = st.text_area(
-            "Protein Sequence",
-            height=120,
-            placeholder="Paste your protein sequence here (FASTA format with header is accepted)...",
-            value=getattr(st.session_state, 'example_sequence', ''),
-            help="Enter a protein sequence in single-letter amino acid code. FASTA headers will be automatically removed."
+        screen_button = st.button(
+            "Screen Sequence",
+            type="primary",
+            disabled=not sequence_input.strip(),
+            use_container_width=True,
         )
 
-        col_id, col_btn = st.columns([2, 1])
-        with col_id:
-            sequence_id = st.text_input(
-                "Sequence ID (Optional)",
-                placeholder="e.g., my_protein_001",
-                label_visibility="collapsed",
-            )
-        with col_btn:
-            screen_button = st.button(
-                "🔍 Screen Sequence",
-                type="primary",
-                disabled=not sequence_input.strip(),
-                use_container_width=True,
-            )
-
-        # Validation feedback
-        if sequence_input.strip():
-            cleaned = sequence_input.strip().replace('\n', '').replace('\r', '')
-            if cleaned.startswith('>'):
-                cleaned = ''.join(cleaned.split('\n')[1:])
-            seq_len = len(cleaned)
-            st.caption(f"📊 {seq_len} amino acids")
-            if seq_len < 10:
-                st.warning("⚠️ Sequence is very short (< 10 aa). Results may be unreliable.")
-            elif seq_len > 1000:
-                st.warning("⚠️ Long sequence (> 1000 aa). Embeddings may be truncated.")
-
-    with col_gauge:
-        st.subheader("🎯 Risk Assessment")
-        if st.session_state.last_result:
-            data = st.session_state.last_result
-            render_risk_gauge(data["risk_score"], data["risk_level"])
+    # Validation feedback
+    if sequence_input.strip():
+        cleaned = sequence_input.strip().replace("\n", "").replace("\r", "")
+        if cleaned.startswith(">"):
+            cleaned = "".join(cleaned.split("\n")[1:])
+        seq_len = len(cleaned)
+        if seq_len < 10:
+            st.warning(f"Sequence very short ({seq_len} aa) — results may be unreliable.")
+        elif seq_len > 1000:
+            st.warning(f"Long sequence ({seq_len} aa) — embeddings may be truncated.")
         else:
-            st.caption("Submit a sequence to see risk assessment.")
+            st.caption(f"{seq_len} amino acids")
 
-    # ── Run screening ────────────────────────────────────────
+    # Screening execution
     if screen_button and sequence_input.strip():
-        with st.spinner("🔬 Analyzing sequence..."):
+        with st.spinner("Analyzing sequence..."):
             result = screen_sequence(
                 sequence=sequence_input,
                 session_id=st.session_state.session_id,
                 sequence_id=sequence_id if sequence_id.strip() else None,
                 run_structure=run_structure,
-                top_k=top_k
+                top_k=top_k,
             )
 
         if result["success"]:
@@ -389,15 +569,16 @@ def main():
             st.session_state.query_count += 1
             st.rerun()
         else:
-            st.error(f"❌ **Error:** {result['error']}")
+            st.error(f"Error: {result['error']}")
             if "details" in result:
                 with st.expander("Error Details"):
                     st.code(result["details"])
 
-    # ── Middle section: 3D viewer (left) + Matches & factors (right) ──
+    # Results
     data = st.session_state.last_result
     if data:
         st.divider()
+        render_summary_cards(data)
 
         pdb_string = data.get("pdb_string")
         has_structure = pdb_string is not None
