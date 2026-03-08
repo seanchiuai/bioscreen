@@ -191,7 +191,7 @@ async def screen_sequence(
 
         # Function prediction (run in thread to avoid blocking event loop)
         function_predictor = get_function_predictor()
-        function_prediction = await asyncio.to_thread(function_predictor.predict, request_data.sequence)
+        function_prediction = await function_predictor.predict_async(request_data.sequence)
 
         # Convert similarity hits to ToxinMatch objects
         top_matches = []

@@ -180,7 +180,9 @@ class MockFunctionPredictor:
         go_terms = self._pick_go_terms(toxin_score)
         ec_numbers = self._pick_ec_numbers(toxin_score)
 
-        if toxin_score > 0.7:
+        toxin_go_ids = {"GO:0090729", "GO:0019835", "GO:0005576"}
+        has_toxin_go = any(t["term"] in toxin_go_ids for t in go_terms)
+        if toxin_score > 0.7 or has_toxin_go:
             summary = "Potentially harmful protein with toxin-like characteristics."
         elif toxin_score > 0.4:
             summary = "Protein with some toxin-like features."
