@@ -88,7 +88,7 @@ def run_blast(seq: str) -> str:
     return "MISSED (no hit)"
 
 
-async def screen(sequence, model, db, settings, run_structure=True):
+async def screen(sequence, model, db, settings):
     """Run screening pipeline, return result dict."""
     from app.pipeline.scoring import compute_score
     from app.pipeline.similarity import FoldseekSearcher
@@ -102,7 +102,7 @@ async def screen(sequence, model, db, settings, run_structure=True):
     max_tm = None
     max_lddt = None
 
-    if run_structure and settings.nvidia_api_key:
+    if settings.nvidia_api_key:
         import httpx
         try:
             async with httpx.AsyncClient(timeout=60) as client:

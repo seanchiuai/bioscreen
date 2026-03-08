@@ -61,9 +61,9 @@ def compute_score(
         embedding_sim = embedding_sim * length_confidence
 
     # Scoring weights - these can be tuned based on validation data
-    # Full path with active site: embedding 0.35, structure 0.25, active_site 0.25, function 0.15
-    # Full path without active site: embedding 0.5, structure 0.3, function 0.2
-    # Fast path (no structure): embedding 0.65, function 0.35
+    # With active site: embedding 0.35, structure 0.25, active_site 0.25, function 0.15
+    # Without active site: embedding 0.5, structure 0.3, function 0.2
+    # Fallback (structure prediction failed): embedding 0.65, function 0.35
     if structural_sim is not None and active_site_overlap is not None:
         weights = {
             "embedding": 0.35,

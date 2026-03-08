@@ -160,7 +160,6 @@ async def demo_sequence_analysis(
         similarity_result = await similarity_searcher.search(
             query_embedding=query_embedding,
             top_k=5,
-            run_structure=False  # Skip structure for demo
         )
 
         max_sim = similarity_result.max_embedding_sim
