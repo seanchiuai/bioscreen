@@ -34,15 +34,14 @@ The core screening flow for a protein sequence:
 1. **Sequence validation** (`sequence.py`) — validates input, detects type (protein/DNA/RNA), translates nucleotides to protein if needed
 2. **Embedding** (`embedding.py`) — generates ESM-2 embeddings (`facebook/esm2_t33_650M_UR50D`)
 3. **Similarity search** (`similarity.py`) — cosine similarity via FAISS (fast path) + optional Foldseek structural alignment (full path)
-4. **Structure prediction** (`structure.py`) — ESMFold via NVIDIA NIM API (only when `run_structure=True`)
+4. **Structure prediction** (`structure.py`) — ESMFold via NVIDIA NIM API (always runs)
 5. **Active site detection** (`active_site.py`) — identifies binding pockets in PDB structures and compares active site geometry between query and known toxins (BioPython + numpy)
 6. **Function prediction** (`function.py`) — GO term / EC number classification
 7. **Risk scoring** (`scoring.py`) — weighted combination of embedding similarity (0.5), structural similarity (0.3), function overlap (0.2), with non-linear transforms and synergy bonuses for multiple high-confidence signals
 
-### Two Screening Paths
+### Screening Path
 
-- **Fast path** (~seconds, CPU): Steps 1→2→3 (FAISS only)→6. Controlled by `run_structure=False` (default).
-- **Full path** (~15s, GPU): All steps including ESMFold + Foldseek. Controlled by `run_structure=True`.
+All screening runs the full pipeline: Steps 1→2→3→4→5→6→7. Structure prediction (ESMFold + Foldseek) is always enabled.
 
 ### Key Design Patterns
 
