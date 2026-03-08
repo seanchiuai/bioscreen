@@ -31,7 +31,16 @@ def render_results(data: dict, key_prefix: str = "") -> None:
 
     # Tabbed detail area
     has_structure = data.get("pdb_string") is not None
+
+    # Check if real InterPro result is ready
+    sequence_id = data.get("sequence_id")
+    real_fn = get_function_result(sequence_id) if sequence_id else None
+    if real_fn is not None:
+        data["function_prediction"] = real_fn
+
     tab_labels = ["Overview", "Matches", "Structure", "Score Breakdown", "Function", "Explain"]
+    if real_fn is None:
+        tab_labels = ["Overview", "Matches", "Structure", "Score Breakdown", "Explain"]
     tabs = st.tabs(tab_labels)
 
     # ── Tab 0: Overview ──────────────────────────────────────────────────
@@ -240,73 +249,63 @@ def render_results(data: dict, key_prefix: str = "") -> None:
 
         st.markdown(f"**Final Score: {risk_score:.3f}**")
 
-    # ── Tab 4: Function ──────────────────────────────────────────────────
-    with tabs[4]:
-        # Check if a real InterPro result has arrived in the background
-        sequence_id = data.get("sequence_id")
-        if sequence_id:
-            real_fn = get_function_result(sequence_id)
-            if real_fn is not None:
-                # Swap in real data
-                data["function_prediction"] = real_fn
-            else:
-                st.caption("⏳ Fetching detailed function annotations from InterPro (30–60s)… refresh to update.")
+    # ── Tab 4: Function (only shown when InterPro result is ready) ───────
+    if real_fn is not None:
+        with tabs[4]:
+            function_pred = data.get("function_prediction")
+            if function_pred:
+                summary = function_pred.get("summary", "")
+                if summary:
+                    st.markdown(f'<div class="recommend-box">{summary}</div>', unsafe_allow_html=True)
 
-        function_pred = data.get("function_prediction")
-        if function_pred:
-            summary = function_pred.get("summary", "")
-            if summary:
-                st.markdown(f'<div class="recommend-box">{summary}</div>', unsafe_allow_html=True)
-
-            go_terms = function_pred.get("go_terms", [])
-            if go_terms:
-                st.markdown("**GO Terms**")
-                for term in go_terms:
-                    term_id = term.get("term", "Unknown")
-                    name = term.get("name", "")
-                    conf = term.get("confidence", "0")
-                    conf_float = float(conf) if conf else 0
-                    conf_pct = int(conf_float * 100)
-                    st.markdown(f"""
-                    <div class="func-card">
-                        <span class="func-card-id">{term_id}</span>
-                        <span class="func-card-name" style="margin-left:8px;">{name}</span>
-                        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-                            <div class="conf-bar-bg" style="flex:1;">
-                                <div class="conf-bar-fill" style="width:{conf_pct}%;"></div>
+                go_terms = function_pred.get("go_terms", [])
+                if go_terms:
+                    st.markdown("**GO Terms**")
+                    for term in go_terms:
+                        term_id = term.get("term", "Unknown")
+                        name = term.get("name", "")
+                        conf = term.get("confidence", "0")
+                        conf_float = float(conf) if conf else 0
+                        conf_pct = int(conf_float * 100)
+                        st.markdown(f"""
+                        <div class="func-card">
+                            <span class="func-card-id">{term_id}</span>
+                            <span class="func-card-name" style="margin-left:8px;">{name}</span>
+                            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                                <div class="conf-bar-bg" style="flex:1;">
+                                    <div class="conf-bar-fill" style="width:{conf_pct}%;"></div>
+                                </div>
+                                <span style="font-size:0.75rem; color:#64748b;">{conf_float:.2f}</span>
                             </div>
-                            <span style="font-size:0.75rem; color:#64748b;">{conf_float:.2f}</span>
                         </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                        """, unsafe_allow_html=True)
 
-            ec_numbers = function_pred.get("ec_numbers", [])
-            if ec_numbers:
-                st.markdown("**EC Numbers**")
-                for ec in ec_numbers:
-                    number = ec.get("number", "Unknown")
-                    conf = ec.get("confidence", "0")
-                    conf_float = float(conf) if conf else 0
-                    conf_pct = int(conf_float * 100)
-                    st.markdown(f"""
-                    <div class="func-card">
-                        <span class="func-card-id">{number}</span>
-                        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-                            <div class="conf-bar-bg" style="flex:1;">
-                                <div class="conf-bar-fill" style="width:{conf_pct}%;"></div>
+                ec_numbers = function_pred.get("ec_numbers", [])
+                if ec_numbers:
+                    st.markdown("**EC Numbers**")
+                    for ec in ec_numbers:
+                        number = ec.get("number", "Unknown")
+                        conf = ec.get("confidence", "0")
+                        conf_float = float(conf) if conf else 0
+                        conf_pct = int(conf_float * 100)
+                        st.markdown(f"""
+                        <div class="func-card">
+                            <span class="func-card-id">{number}</span>
+                            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                                <div class="conf-bar-bg" style="flex:1;">
+                                    <div class="conf-bar-fill" style="width:{conf_pct}%;"></div>
+                                </div>
+                                <span style="font-size:0.75rem; color:#64748b;">{conf_float:.2f}</span>
                             </div>
-                            <span style="font-size:0.75rem; color:#64748b;">{conf_float:.2f}</span>
                         </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                        """, unsafe_allow_html=True)
 
-            if not go_terms and not ec_numbers:
-                st.info("No GO terms or EC numbers predicted.")
-        else:
-            st.info("No function prediction available.")
+                if not go_terms and not ec_numbers:
+                    st.info("No GO terms or EC numbers predicted.")
 
-    # ── Tab 5: Explain ───────────────────────────────────────────────────
-    with tabs[5]:
+    # ── Tab 5 / 4: Explain ───────────────────────────────────────────────
+    explain_idx = 5 if real_fn is not None else 4
+    with tabs[explain_idx]:
         risk_score = data["risk_score"]
         risk_level = data["risk_level"]
         factors = data.get("risk_factors", {})
