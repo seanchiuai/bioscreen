@@ -3,6 +3,11 @@ import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
 
+# Load real faiss before any test module can stub it out via sys.modules.setdefault.
+# test_pipeline.py is collected first (alphabetically), so this ensures sys.modules["faiss"]
+# holds the real extension — subsequent setdefault calls in other modules become no-ops.
+import faiss  # noqa: E402, F401
+
 from app.pipeline.sequence import validate_sequence, validate_protein_sequence, translate_to_protein, SequenceType
 from app.pipeline.scoring import compute_score
 from app.pipeline.function import FunctionPredictor, MockFunctionPredictor, InterProPredictor
@@ -251,6 +256,10 @@ def test_foldseek_parse_m8_malformed():
 
 # ── Foldseek availability ─────────────────────────────────────────────────────
 
+@pytest.mark.skipif(
+    __import__("shutil").which("foldseek") is None,
+    reason="foldseek binary not on PATH",
+)
 def test_foldseek_binary_available():
     import shutil
     assert shutil.which('foldseek') is not None, "foldseek binary not on PATH"
