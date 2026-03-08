@@ -107,18 +107,6 @@ function rotateView(angle) {{
         {viewer_var}.render();
     }}
 }}
-function zoomToResidues(residues) {{
-    if (typeof {viewer_var} !== 'undefined' && residues.length > 0) {{
-        {viewer_var}.zoomTo({{resi: residues}}, 800);
-        {viewer_var}.render();
-    }}
-}}
-function zoomReset() {{
-    if (typeof {viewer_var} !== 'undefined') {{
-        {viewer_var}.zoomTo();
-        {viewer_var}.render();
-    }}
-}}
 </script>
 </body>
 </html>"""
@@ -364,15 +352,6 @@ def generate_video(video_data: ProteinVideoData, fps: int = FPS, duration: float
 
                 # Rotate the view
                 page.evaluate(f"rotateView({rotation_per_frame})")
-
-                # Zoom into danger zone at 7s
-                if video_data.danger_residues:
-                    if abs(t_sec - 7.0) < (1.0 / fps):
-                        residues_js = str(video_data.danger_residues)
-                        page.evaluate(f"zoomToResidues({residues_js})")
-                    elif abs(t_sec - 9.5) < (1.0 / fps):
-                        page.evaluate("zoomReset()")
-
                 page.wait_for_timeout(30)  # let WebGL render
 
                 # Screenshot
