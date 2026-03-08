@@ -42,18 +42,21 @@ def page():
             unsafe_allow_html=True,
         )
     if not api_ok:
-        st.error(f"Cannot reach API: {health.get('message', 'Unknown error')}")
-        st.stop()
+        st.warning(f"API may be busy: {health.get('message', 'Unknown error')}")
 
     # Input strip
     col_seq, col_controls = st.columns([3, 2])
+
+    def _on_demo_change():
+        choice = st.session_state._demo_choice
+        st.session_state.example_sequence = DEMO_SEQUENCES.get(choice, "")
 
     with col_seq:
         sequence_input = st.text_area(
             "Protein Sequence",
             height=100,
             placeholder="Paste protein sequence here (FASTA headers auto-stripped)...",
-            value=getattr(st.session_state, "example_sequence", ""),
+            value=st.session_state.get("example_sequence", ""),
             label_visibility="collapsed",
         )
         sequence_id = st.text_input(
@@ -63,13 +66,13 @@ def page():
         )
 
     with col_controls:
-        demo_choice = st.selectbox(
+        st.selectbox(
             "Demo sequence",
             options=list(DEMO_SEQUENCES.keys()),
+            key="_demo_choice",
+            on_change=_on_demo_change,
             label_visibility="collapsed",
         )
-        if DEMO_SEQUENCES.get(demo_choice):
-            st.session_state.example_sequence = DEMO_SEQUENCES[demo_choice]
 
         top_k = st.number_input("Top K", min_value=1, max_value=20, value=5, label_visibility="collapsed")
 

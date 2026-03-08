@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from datetime import datetime, timezone
+from functools import partial
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -162,9 +164,9 @@ async def screen_sequence(
         # Generate sequence ID if not provided
         sequence_id = request_data.sequence_id or f"query_{hash(request_data.sequence) % 100000}"
 
-        # Generate embedding
+        # Generate embedding (run in thread to avoid blocking event loop)
         logger.info(f"Generating embedding for sequence {sequence_id}")
-        query_embedding = embedding_model.embed(request_data.sequence)
+        query_embedding = await asyncio.to_thread(embedding_model.embed, request_data.sequence)
 
         # Always predict structure
         pdb_string = None
@@ -185,9 +187,9 @@ async def screen_sequence(
             top_k=request_data.top_k,
         )
 
-        # Function prediction
+        # Function prediction (run in thread to avoid blocking event loop)
         function_predictor = get_function_predictor()
-        function_prediction = function_predictor.predict(request_data.sequence)
+        function_prediction = await asyncio.to_thread(function_predictor.predict, request_data.sequence)
 
         # Convert similarity hits to ToxinMatch objects
         top_matches = []

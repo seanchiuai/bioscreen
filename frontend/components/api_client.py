@@ -29,7 +29,7 @@ DEMO_SEQUENCES = {
 def check_api_health() -> dict:
     """Check if the API is running and healthy."""
     try:
-        response = requests.get(f"{API_BASE_URL}/health", timeout=5)
+        response = requests.get(f"{API_BASE_URL}/health", timeout=30)
         if response.status_code == 200:
             return response.json()
         return {"status": "error", "message": f"API returned status {response.status_code}"}
