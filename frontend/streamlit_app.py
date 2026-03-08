@@ -580,33 +580,59 @@ def main():
         st.divider()
         render_summary_cards(data)
 
-        pdb_string = data.get("pdb_string")
-        has_structure = pdb_string is not None
+        # Tabbed detail area
+        has_structure = data.get("pdb_string") is not None
+        tab_labels = ["Matches", "Structure", "Score Breakdown", "Function", "Explain"]
+        tabs = st.tabs(tab_labels)
 
-        if has_structure:
-            col_viewer, col_matches = st.columns([3, 2])
-        else:
-            # No 3D viewer — use full width for matches
-            col_matches = st.container()
+        with tabs[0]:
+            if data.get("top_matches"):
+                matches_data = []
+                for i, match in enumerate(data["top_matches"], 1):
+                    matches_data.append({
+                        "Rank": i,
+                        "Name": match["name"],
+                        "Organism": match["organism"],
+                        "Toxin Type": match["toxin_type"],
+                        "Embedding Sim": match["embedding_similarity"],
+                        "Structure Sim": match.get("structure_similarity") if has_structure else None,
+                    })
+                df = pd.DataFrame(matches_data)
 
-        # 3D Viewer column
-        if has_structure:
-            with col_viewer:
-                st.subheader("🔬 3D Structure")
+                col_config = {
+                    "Rank": st.column_config.NumberColumn(width="small"),
+                    "Name": st.column_config.TextColumn(width="medium"),
+                    "Organism": st.column_config.TextColumn(width="medium"),
+                    "Toxin Type": st.column_config.TextColumn(width="small"),
+                    "Embedding Sim": st.column_config.ProgressColumn(
+                        "Embedding Sim", min_value=0, max_value=1, format="%.3f",
+                    ),
+                }
+                if has_structure:
+                    col_config["Structure Sim"] = st.column_config.ProgressColumn(
+                        "Structure Sim", min_value=0, max_value=1, format="%.3f",
+                    )
+                else:
+                    df["Structure Sim"] = "\u2014"
+                    col_config["Structure Sim"] = st.column_config.TextColumn("Structure Sim")
+
+                st.dataframe(df, column_config=col_config, use_container_width=True, hide_index=True)
+            else:
+                st.info("No significant matches found.")
+
+        with tabs[1]:
+            pdb_string = data.get("pdb_string")
+            if pdb_string:
                 col_view, col_color = st.columns(2)
                 with col_view:
                     view_style = st.radio(
-                        "View",
-                        ["Cartoon", "Surface", "Stick"],
-                        horizontal=True,
-                        key="view_style",
+                        "View", ["Cartoon", "Surface", "Stick"],
+                        horizontal=True, key="view_style",
                     )
                 with col_color:
                     color_mode = st.radio(
-                        "Color",
-                        ["Default", "pLDDT"],
-                        horizontal=True,
-                        key="color_mode",
+                        "Color", ["Default", "pLDDT"],
+                        horizontal=True, key="color_mode",
                         help="pLDDT: ESMFold confidence (blue=high, red=low)",
                     )
 
@@ -619,90 +645,193 @@ def main():
                     danger_residues=danger_res,
                     view_style=view_style,
                     color_mode=color_mode,
+                    width=800,
+                    height=500,
                 )
 
-                # Legend
-                legend_parts = []
+                legend_parts = ["Blue: normal structure"]
                 if pocket_res:
-                    legend_parts.append(f"🟠 Active site pocket ({len(pocket_res)} residues)")
+                    legend_parts.append(f"Orange: active site pocket ({len(pocket_res)} residues)")
                 if danger_res:
-                    legend_parts.append(f"🔴 Danger residues ({len(danger_res)} residues)")
-                if legend_parts:
-                    st.caption(" | ".join(legend_parts))
-
-        # Matches + Risk factors column
-        with col_matches:
-            st.subheader("🎯 Top Toxin Matches")
-            if data.get("top_matches"):
-                matches_data = []
-                for i, match in enumerate(data["top_matches"], 1):
-                    matches_data.append({
-                        "Rank": i,
-                        "UniProt ID": match["uniprot_id"],
-                        "Name": match["name"][:50] + ("..." if len(match["name"]) > 50 else ""),
-                        "Organism": match["organism"][:30] + ("..." if len(match["organism"]) > 30 else ""),
-                        "Type": match["toxin_type"],
-                        "Emb Sim": f"{match['embedding_similarity']:.3f}",
-                        "Str Sim": f"{match['structure_similarity']:.3f}" if match.get("structure_similarity") else "N/A"
-                    })
-                matches_df = pd.DataFrame(matches_data)
-                st.dataframe(matches_df, use_container_width=True, hide_index=True)
+                    legend_parts.append(f"Red: danger residues ({len(danger_res)} residues)")
+                st.caption(" | ".join(legend_parts))
             else:
-                st.info("No significant matches found.")
+                st.info("Structure analysis was not run. Enable 'Structure analysis' and re-screen to see the 3D viewer.")
 
-            # Risk factors breakdown
+        with tabs[2]:
             factors = data.get("risk_factors", {})
-            if factors:
-                with st.expander("📋 Risk Factor Breakdown", expanded=True):
-                    col_e, col_s = st.columns(2)
-                    with col_e:
-                        emb_sim = factors.get("max_embedding_similarity", 0)
-                        st.metric("Embedding Similarity", f"{emb_sim:.3f}")
-                    with col_s:
-                        struct_sim = factors.get("max_structure_similarity")
-                        if struct_sim is not None:
-                            st.metric("Structure Similarity", f"{struct_sim:.3f}")
-                        else:
-                            st.metric("Structure Similarity", "N/A")
+            emb_sim = factors.get("max_embedding_similarity", 0)
+            struct_sim = factors.get("max_structure_similarity")
+            func_overlap = factors.get("function_overlap", 0)
+            structure_ran = data.get("structure_predicted", False)
 
-                    col_f, col_x = st.columns(2)
-                    with col_f:
-                        func_overlap = factors.get("function_overlap", 0)
-                        st.metric("Function Overlap", f"{func_overlap:.3f}")
-                    with col_x:
-                        if factors.get("score_explanation"):
-                            st.caption(factors["score_explanation"][:200])
+            if structure_ran and struct_sim is not None:
+                weight_set = {"Embedding": 0.50, "Structure": 0.30, "Function": 0.20}
+                weight_note = "Full path weights (embedding 0.50, structure 0.30, function 0.20)"
+            else:
+                weight_set = {"Embedding": 0.65, "Function": 0.35}
+                weight_note = "Fast path weights (embedding 0.65, function 0.35)"
 
-        # ── Function prediction (full width) ─────────────────
-        st.divider()
-        st.subheader("🧬 Function Prediction")
-        function_pred = data.get("function_prediction")
-        if function_pred:
-            st.markdown(format_function_prediction(function_pred))
-        else:
-            st.info("No function prediction available.")
+            st.markdown(f"**Weight set:** {weight_note}")
 
-        # ── Warnings ─────────────────────────────────────────
-        if data.get("warnings"):
-            for warning in data["warnings"]:
-                st.warning(warning)
+            components_list = [
+                ("Embedding Similarity", emb_sim, weight_set.get("Embedding", 0)),
+            ]
+            if structure_ran:
+                components_list.append(
+                    ("Structure Similarity", struct_sim if struct_sim is not None else 0, weight_set.get("Structure", 0)),
+                )
+            components_list.append(
+                ("Function Overlap", func_overlap, weight_set.get("Function", 0)),
+            )
 
-        # ── Session Monitoring (full width) ──────────────────
-        st.divider()
-        st.subheader("📡 Session Monitoring")
-        render_session_monitor(data)
+            for label, raw_val, weight in components_list:
+                pct = int(raw_val * 100)
+                weighted = raw_val * weight
+                st.markdown(f"""
+                <div class="score-bar-row">
+                    <span class="score-bar-label">{label}</span>
+                    <div class="score-bar-track">
+                        <div class="score-bar-value" style="width:{pct}%;"></div>
+                    </div>
+                    <span class="score-bar-num">{raw_val:.3f}</span>
+                </div>
+                """, unsafe_allow_html=True)
+                st.caption(f"Weight: {weight:.2f} | Contribution: {weighted:.3f}")
 
-        # ── Raw data (collapsed) ─────────────────────────────
-        with st.expander("🔍 Raw Response Data", expanded=False):
-            st.json(data)
+            risk_score = data["risk_score"]
+            total_weighted = sum(raw * w for _, raw, w in components_list)
+            bonus = max(0, risk_score - min(1.0, total_weighted))
+            if bonus > 0.01:
+                st.markdown(f"""
+                <div class="score-bar-row">
+                    <span class="score-bar-label">Synergy Bonus</span>
+                    <div class="score-bar-track">
+                        <div class="score-bar-value" style="width:{int(bonus*100)}%; background:#a78bfa;"></div>
+                    </div>
+                    <span class="score-bar-num">+{bonus:.3f}</span>
+                </div>
+                """, unsafe_allow_html=True)
+                st.caption("Bonus for multiple high-confidence signals")
 
-    # ── Footer ───────────────────────────────────────────────
+            st.markdown(f"**Final Score: {risk_score:.3f}**")
+
+        with tabs[3]:
+            function_pred = data.get("function_prediction")
+            if function_pred:
+                summary = function_pred.get("summary", "")
+                if summary:
+                    st.markdown(f'<div class="recommend-box">{summary}</div>', unsafe_allow_html=True)
+
+                go_terms = function_pred.get("go_terms", [])
+                if go_terms:
+                    st.markdown("**GO Terms**")
+                    for term in go_terms:
+                        term_id = term.get("term", "Unknown")
+                        name = term.get("name", "")
+                        conf = term.get("confidence", "0")
+                        conf_float = float(conf) if conf else 0
+                        conf_pct = int(conf_float * 100)
+                        st.markdown(f"""
+                        <div class="func-card">
+                            <span class="func-card-id">{term_id}</span>
+                            <span class="func-card-name" style="margin-left:8px;">{name}</span>
+                            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                                <div class="conf-bar-bg" style="flex:1;">
+                                    <div class="conf-bar-fill" style="width:{conf_pct}%;"></div>
+                                </div>
+                                <span style="font-size:0.75rem; color:#64748b;">{conf_float:.2f}</span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                ec_numbers = function_pred.get("ec_numbers", [])
+                if ec_numbers:
+                    st.markdown("**EC Numbers**")
+                    for ec in ec_numbers:
+                        number = ec.get("number", "Unknown")
+                        conf = ec.get("confidence", "0")
+                        conf_float = float(conf) if conf else 0
+                        conf_pct = int(conf_float * 100)
+                        st.markdown(f"""
+                        <div class="func-card">
+                            <span class="func-card-id">{number}</span>
+                            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                                <div class="conf-bar-bg" style="flex:1;">
+                                    <div class="conf-bar-fill" style="width:{conf_pct}%;"></div>
+                                </div>
+                                <span style="font-size:0.75rem; color:#64748b;">{conf_float:.2f}</span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                if not go_terms and not ec_numbers:
+                    st.info("No GO terms or EC numbers predicted.")
+            else:
+                st.info("No function prediction available.")
+
+        with tabs[4]:
+            risk_score = data["risk_score"]
+            risk_level = data["risk_level"]
+            factors = data.get("risk_factors", {})
+            explanation = factors.get("score_explanation", "")
+
+            if risk_score >= 0.75:
+                verdict_class = "verdict-high"
+            elif risk_score >= 0.45:
+                verdict_class = "verdict-medium"
+            else:
+                verdict_class = "verdict-low"
+
+            parts = [p.strip() for p in explanation.split(". ") if p.strip()]
+            verdict_text = parts[0] if parts else f"{risk_level} RISK"
+
+            st.markdown(f'<div class="verdict-box {verdict_class}">{verdict_text}</div>', unsafe_allow_html=True)
+
+            if len(parts) > 1:
+                for part in parts[1:]:
+                    if part.startswith("Factors:"):
+                        factor_text = part[len("Factors:"):].strip()
+                        factor_items = [f.strip() for f in factor_text.split(";") if f.strip()]
+                        for item in factor_items:
+                            st.markdown(f"- {item}")
+                    elif part.startswith("Recommend"):
+                        st.markdown(f'<div class="recommend-box">{part}.</div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"- {part}")
+
+            anomaly_score = factors.get("session_anomaly_score", 0.0)
+            query_count = st.session_state.get("query_count", 0)
+            if anomaly_score > 0 or query_count > 1:
+                st.markdown("---")
+                st.markdown("**Session Monitoring**")
+                if anomaly_score > 0.5:
+                    st.warning(f"Session anomaly score: {anomaly_score:.2f} — convergent optimization pattern detected across {query_count} queries.")
+                elif anomaly_score > 0.3:
+                    st.info(f"Session anomaly score: {anomaly_score:.2f} — elevated activity across {query_count} queries.")
+                else:
+                    st.caption(f"Session anomaly score: {anomaly_score:.2f} (normal) | {query_count} queries this session")
+
+            warnings = data.get("warnings", [])
+            if warnings:
+                st.markdown("---")
+                st.markdown("**Warnings**")
+                for w in warnings:
+                    st.warning(w)
+
+        # Copy JSON button
+        col_spacer, col_json = st.columns([5, 1])
+        with col_json:
+            if st.button("Copy JSON", key="copy_json"):
+                st.code(json.dumps(data, indent=2), language="json")
+
+    # Footer
     st.divider()
     st.markdown(
-        "<div style='text-align: center; color: gray; font-size: 0.8em;'>"
-        "🧬 BioScreen - Structure-based biosecurity screening for AI-designed proteins<br>"
-        "For research purposes only. Always validate results with experimental methods."
-        "</div>",
+        '<div style="text-align:center; color:#94a3b8; font-size:0.8rem;">'
+        'BioScreen — Structure-based biosecurity screening for AI-designed proteins. '
+        'For research purposes only. Always validate results with experimental methods.'
+        '</div>',
         unsafe_allow_html=True,
     )
 
