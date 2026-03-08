@@ -68,8 +68,23 @@ Behavioral monitoring layer that detects convergent optimization patterns (e.g.,
 | `/api/batch` | POST | Screen multiple sequences |
 | `/api/health` | GET | Health/readiness check |
 | `/api/toxins` | GET | List toxin DB entries |
+| `/api/compare` | POST | Compare query structure with toxin via superposition |
 | `/api/session/{id}` | GET | Get session state/history |
 | `/api/session/{id}/alerts` | GET | Get anomaly alerts for session |
+
+### Frontend (`frontend/`)
+
+Streamlit-based UI with multi-page layout:
+
+- `streamlit_app.py` — main app entry point
+- `pages/single_screen.py` — single sequence screening page
+- `pages/session_analysis.py` — session history and anomaly analysis
+- `components/api_client.py` — HTTP client for the backend API
+- `components/protein_3d.py` — py3Dmol 3D protein structure viewer
+- `components/result_viewer.py` — screening result display
+- `components/summary_cards.py` — summary card widgets
+- `components/styles.py` — shared CSS/styling
+- `video_generator.py` — captures py3Dmol via headless Playwright + composites stats overlays with PIL, outputs MP4 via ffmpeg
 
 ## Environment Setup
 
@@ -83,6 +98,7 @@ Requires `.env` file (copy from `.env.example`). Key variables:
 - `ESM2_MODEL_NAME` — HuggingFace model ID for embeddings
 - `TOXIN_DB_PATH` / `TOXIN_META_PATH` — paths to FAISS index and metadata JSON
 - `FOLDSEEK_BIN` / `FOLDSEEK_DB_PATH` — Foldseek binary and database paths
+- `UNIPROT_BATCH_SIZE` / `MAX_TOXIN_RECORDS` — UniProt build settings for `scripts/build_db.py`
 - `EMBEDDING_SIM_THRESHOLD` / `STRUCTURE_SIM_THRESHOLD` / `RISK_HIGH_THRESHOLD` / `RISK_MEDIUM_THRESHOLD` — screening thresholds
 
 ## Testing
