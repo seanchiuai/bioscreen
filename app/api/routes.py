@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
+from datetime import datetime, timezone
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from loguru import logger
 
 from app import __version__
@@ -21,6 +23,8 @@ from app.models.schemas import (
     FunctionPrediction,
     ToxinMatch,
 )
+from app.monitoring import default_analyzer, default_store
+from app.monitoring.schemas import AnomalyAlert, SessionEntry, SessionState
 from app.pipeline.embedding import get_embedding_model
 from app.pipeline.function import FunctionPredictor
 from app.pipeline.scoring import compute_score
@@ -111,6 +115,7 @@ async def list_proteins(
 async def screen_sequence(
     request_data: ScreeningRequest,
     app_request: Request,
+    x_session_id: str | None = Header(None),
 ) -> ScreeningResult:
     """Screen a single sequence for toxin similarity."""
     settings = get_settings()
@@ -226,6 +231,22 @@ async def screen_sequence(
         else:
             risk_level = RiskLevel.LOW
 
+        # Session monitoring — track this query and run anomaly analysis.
+        _session_id = x_session_id or (
+            app_request.client.host if app_request.client else "unknown"
+        )
+        _seq_hash = hashlib.sha256(request_data.sequence.encode()).hexdigest()
+        _entry = SessionEntry(
+            sequence_hash=_seq_hash,
+            embedding=query_embedding.tolist(),
+            timestamp=datetime.now(timezone.utc),
+            risk_score=risk_score,
+            sequence_length=len(request_data.sequence),
+        )
+        _state = default_store.add_entry(_session_id, _entry)
+        _alert = default_analyzer.analyze(list(_state.entries))
+        _state.anomaly_score = _alert.anomaly_score
+
         # Build risk factors
         risk_factors = {
             "max_embedding_similarity": max_embedding_sim,
@@ -233,6 +254,7 @@ async def screen_sequence(
             "function_overlap": function_overlap,
             "score_explanation": score_explanation,
             "top_match_count": len(top_matches),
+            "session_anomaly_score": _alert.anomaly_score,
         }
 
         # Warnings
@@ -312,3 +334,21 @@ async def batch_screen_sequences(
         medium_risk_count=medium_risk_count,
         low_risk_count=low_risk_count,
     )
+
+
+@router.get("/session/{session_id}", response_model=SessionState)
+async def get_session(session_id: str) -> SessionState:
+    """Return the stored session state for *session_id*."""
+    state = default_store.get_session(session_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return state
+
+
+@router.get("/session/{session_id}/alerts", response_model=AnomalyAlert)
+async def get_session_alerts(session_id: str) -> AnomalyAlert:
+    """Run anomaly analysis on the current session window and return the result."""
+    state = default_store.get_session(session_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return default_analyzer.analyze(list(state.entries))
