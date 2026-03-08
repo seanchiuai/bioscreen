@@ -16,16 +16,19 @@ def compute_score(
     embedding_sim: float,
     structural_sim: Optional[float] = None,
     function_overlap: float = 0.0,
+    active_site_overlap: Optional[float] = None,
 ) -> Tuple[float, str]:
     """Compute a unified risk score from multiple similarity metrics.
 
     Combines sequence embedding similarity, structural similarity (if available),
-    and functional annotation overlap into a single risk score between 0 and 1.
+    functional annotation overlap, and active site geometry comparison into a
+    single risk score between 0 and 1.
 
     Args:
         embedding_sim: ESM-2 embedding cosine similarity (0-1).
         structural_sim: Foldseek TM-score or None if not available (0-1).
         function_overlap: Jaccard similarity of GO terms/EC numbers (0-1).
+        active_site_overlap: Active site geometric similarity (0-1), or None.
 
     Returns:
         Tuple of (risk_score, explanation):
@@ -33,10 +36,11 @@ def compute_score(
             - explanation: Human-readable explanation of the score
     """
     logger.debug(
-        "Computing score: embedding_sim={:.3f}, structural_sim={}, function_overlap={:.3f}",
+        "Computing score: embedding_sim={:.3f}, structural_sim={}, function_overlap={:.3f}, active_site={}",
         embedding_sim,
         structural_sim,
         function_overlap,
+        active_site_overlap,
     )
 
     # Validate inputs
@@ -44,19 +48,34 @@ def compute_score(
     if structural_sim is not None:
         structural_sim = max(0.0, min(1.0, structural_sim))
     function_overlap = max(0.0, min(1.0, function_overlap))
+    if active_site_overlap is not None:
+        active_site_overlap = max(0.0, min(1.0, active_site_overlap))
 
     # Scoring weights - these can be tuned based on validation data
-    weights = {
-        "embedding": 0.5,    # Sequence similarity is primary signal
-        "structure": 0.3,    # Structure adds confidence when available
-        "function": 0.2,     # Function overlap confirms biological relevance
-    }
-
-    # When structure is not available, redistribute its weight
-    if structural_sim is None:
-        weights["embedding"] = 0.65
-        weights["function"] = 0.35
-        weights["structure"] = 0.0
+    # Full path with active site: embedding 0.35, structure 0.25, active_site 0.25, function 0.15
+    # Full path without active site: embedding 0.5, structure 0.3, function 0.2
+    # Fast path (no structure): embedding 0.65, function 0.35
+    if structural_sim is not None and active_site_overlap is not None:
+        weights = {
+            "embedding": 0.35,
+            "structure": 0.25,
+            "active_site": 0.25,
+            "function": 0.15,
+        }
+    elif structural_sim is not None:
+        weights = {
+            "embedding": 0.5,
+            "structure": 0.3,
+            "active_site": 0.0,
+            "function": 0.2,
+        }
+    else:
+        weights = {
+            "embedding": 0.65,
+            "structure": 0.0,
+            "active_site": 0.0,
+            "function": 0.35,
+        }
 
     # Base score components
     embedding_score = embedding_sim
@@ -87,10 +106,19 @@ def compute_score(
     else:
         function_score = 0.3 * (function_overlap / 0.5)
 
+    # Active site overlap: very high overlap is the strongest danger signal
+    active_site_score = 0.0
+    if active_site_overlap is not None:
+        if active_site_overlap > 0.6:
+            active_site_score = 0.4 + 0.6 * ((active_site_overlap - 0.6) / 0.4) ** 1.5
+        else:
+            active_site_score = 0.4 * (active_site_overlap / 0.6)
+
     # Weighted combination
     raw_score = (
         weights["embedding"] * embedding_score +
         weights["structure"] * structure_score +
+        weights["active_site"] * active_site_score +
         weights["function"] * function_score
     )
 
@@ -101,6 +129,8 @@ def compute_score(
     if embedding_sim > 0.8:
         high_confidence_signals += 1
     if structural_sim is not None and structural_sim > 0.7:
+        high_confidence_signals += 1
+    if active_site_overlap is not None and active_site_overlap > 0.6:
         high_confidence_signals += 1
     if function_overlap > 0.4:
         high_confidence_signals += 1
@@ -119,6 +149,7 @@ def compute_score(
         embedding_sim=embedding_sim,
         structural_sim=structural_sim,
         function_overlap=function_overlap,
+        active_site_overlap=active_site_overlap,
         high_confidence_signals=high_confidence_signals,
         bonus=bonus,
     )
@@ -138,8 +169,9 @@ def _generate_explanation(
     embedding_sim: float,
     structural_sim: Optional[float],
     function_overlap: float,
-    high_confidence_signals: int,
-    bonus: float,
+    active_site_overlap: Optional[float] = None,
+    high_confidence_signals: int = 0,
+    bonus: float = 0.0,
 ) -> str:
     """Generate human-readable explanation of the risk score."""
     parts = []
@@ -181,6 +213,15 @@ def _generate_explanation(
             details.append(f"low structural similarity ({structural_sim:.3f})")
     else:
         details.append("structural analysis not performed")
+
+    # Active site overlap
+    if active_site_overlap is not None:
+        if active_site_overlap >= 0.7:
+            details.append(f"high active site similarity ({active_site_overlap:.3f}) — catalytic geometry matches known toxin")
+        elif active_site_overlap >= 0.4:
+            details.append(f"moderate active site similarity ({active_site_overlap:.3f})")
+        else:
+            details.append(f"low active site similarity ({active_site_overlap:.3f})")
 
     # Function overlap
     if function_overlap >= 0.6:

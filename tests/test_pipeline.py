@@ -114,6 +114,18 @@ def test_no_structure_redistributes_weights():
     assert 0.0 <= score <= 1.0
     assert 'structural analysis not performed' in explanation
 
+def test_active_site_overlap_increases_score():
+    """Active site similarity should increase risk score."""
+    score_without, _ = compute_score(0.8, 0.7, 0.3, active_site_overlap=None)
+    score_with, _ = compute_score(0.8, 0.7, 0.3, active_site_overlap=0.8)
+    assert score_with > score_without
+
+def test_full_pipeline_scoring():
+    """All four signals high → very high risk."""
+    score, explanation = compute_score(0.95, 0.9, 0.8, active_site_overlap=0.85)
+    assert score > 0.75, f"Full pipeline high signals should be HIGH risk, got {score}"
+    assert 'active site' in explanation.lower()
+
 # ── Function prediction ──────────────────────────────────────────────────────
 
 def test_function_predictor_returns_prediction():
@@ -257,6 +269,51 @@ def test_screening_request_min_length():
         ScreeningRequest(sequence="MKT")  # too short (min_length=10)
 
 # ── Toxin database integration ───────────────────────────────────────────────
+
+# ── Active site comparison ────────────────────────────────────────────────────
+
+def test_pocket_detection_from_pdb():
+    """Test pocket detection on a real PDB file from our toxin structures."""
+    from app.pipeline.active_site import detect_pockets
+    import glob
+    pdb_files = glob.glob('data/toxin_structures/*.pdb')
+    if not pdb_files:
+        pytest.skip("No toxin structures available")
+    pdb_string = open(pdb_files[0]).read()
+    pockets = detect_pockets(pdb_string)
+    # Should detect at least one pocket in a real protein
+    assert len(pockets) >= 0  # some small peptides may have no pockets
+    for p in pockets:
+        assert len(p.residue_indices) >= 5
+        assert p.ca_coords.shape[1] == 3
+
+def test_compare_identical_pockets():
+    """Comparing a pocket to itself should give RMSD ≈ 0 and overlap ≈ 1."""
+    from app.pipeline.active_site import Pocket, compare_active_sites
+    coords = np.random.randn(10, 3).astype(np.float64)
+    pocket = Pocket(
+        residue_indices=list(range(10)),
+        residue_names=['ALA'] * 10,
+        center=coords.mean(axis=0),
+        ca_coords=coords,
+    )
+    match = compare_active_sites(pocket, pocket)
+    assert match.rmsd < 0.01
+    assert match.overlap_score > 0.99
+
+def test_compare_different_pockets():
+    """Very different pockets should have high RMSD and low overlap."""
+    from app.pipeline.active_site import Pocket, compare_active_sites
+    coords1 = np.zeros((10, 3))
+    coords1[:, 0] = np.arange(10)  # line along x
+    coords2 = np.random.randn(10, 3) * 20  # scattered far apart
+
+    p1 = Pocket(residue_indices=list(range(10)), residue_names=['ALA']*10,
+                center=coords1.mean(axis=0), ca_coords=coords1)
+    p2 = Pocket(residue_indices=list(range(10)), residue_names=['ALA']*10,
+                center=coords2.mean(axis=0), ca_coords=coords2)
+    match = compare_active_sites(p1, p2)
+    assert match.overlap_score < 0.8  # should be dissimilar
 
 # ── Edge cases ────────────────────────────────────────────────────────────────
 

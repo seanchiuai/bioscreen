@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+data/toxin_structures/
+data/foldseek_db/
+data/foldseek_toxin_db/
+venv/
+.claude/
