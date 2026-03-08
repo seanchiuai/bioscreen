@@ -5,6 +5,7 @@ and visualizing similarity results and risk assessments.
 """
 
 import json
+import uuid
 from typing import Optional
 
 import pandas as pd
@@ -14,6 +15,17 @@ import streamlit as st
 
 # Configuration
 API_BASE_URL = "http://localhost:8000/api"
+
+# Demo sequences for the sidebar selector
+DEMO_SEQUENCES = {
+    "-- Select a demo sequence --": "",
+    "Insulin (full, 110aa)": "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGGPGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN",
+    "Insulin B chain (short, 30aa)": "FVNQHLCGSHLVEALYLVCGERGFFYTPKT",
+    "Human Lysozyme (benign, 130aa)": "KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQINSRYWCNDGKTPGAVNACHLSCSALLQDNIADAVACAKRVVRDPQGIRAWVAWRNRCQNRDVRQYVQGCGV",
+    "GFP (benign, 238aa)": "MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTFSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK",
+    "Hemoglobin alpha (benign, 141aa)": "MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLAS",
+    "Short test (13aa)": "MKAIFVLKGWWRT",
+}
 
 
 def check_api_health() -> dict:
@@ -29,6 +41,7 @@ def check_api_health() -> dict:
 
 def screen_sequence(
     sequence: str,
+    session_id: str,
     sequence_id: Optional[str] = None,
     run_structure: bool = False,
     top_k: int = 5
@@ -45,6 +58,7 @@ def screen_sequence(
         response = requests.post(
             f"{API_BASE_URL}/screen",
             json=payload,
+            headers={"X-Session-Id": session_id},
             timeout=120,  # Allow time for structure prediction
         )
 
@@ -113,6 +127,10 @@ def main():
         initial_sidebar_state="expanded"
     )
 
+    # Generate a persistent session ID for monitoring
+    if "session_id" not in st.session_state:
+        st.session_state.session_id = str(uuid.uuid4())
+
     st.title("🧬 BioScreen - Protein Toxin Screening")
     st.markdown("**Identify potential toxin similarity in protein sequences using ESM-2 embeddings and structure analysis**")
 
@@ -152,15 +170,17 @@ def main():
             help="Number of top similar toxins to display"
         )
 
-        # Example sequences
+        # Demo sequences
         st.divider()
-        st.subheader("Example Sequences")
+        st.subheader("Demo Sequences")
 
-        if st.button("Load Insulin Example"):
-            st.session_state.example_sequence = "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGGPGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN"
-
-        if st.button("Load Short Test Sequence"):
-            st.session_state.example_sequence = "MKAIFVLKGWWRT"
+        demo_choice = st.selectbox(
+            "Load a demo sequence",
+            options=list(DEMO_SEQUENCES.keys()),
+            help="Select a pre-built sequence to load into the input area"
+        )
+        if DEMO_SEQUENCES.get(demo_choice):
+            st.session_state.example_sequence = DEMO_SEQUENCES[demo_choice]
 
     # Main interface
     col1, col2 = st.columns([1, 1])
@@ -216,6 +236,7 @@ def main():
             with st.spinner("🔬 Analyzing sequence..."):
                 result = screen_sequence(
                     sequence=sequence_input,
+                    session_id=st.session_state.session_id,
                     sequence_id=sequence_id if sequence_id.strip() else None,
                     run_structure=run_structure,
                     top_k=top_k
