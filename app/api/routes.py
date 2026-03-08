@@ -224,11 +224,17 @@ async def screen_sequence(
         active_site_score = None
         pocket_residues: list[int] = []
         danger_residues: list[int] = []
+        aligned_regions: list[list[int]] = []
 
         if request_data.run_structure and similarity_result.structure_hits:
             # Foldseek lDDT captures local structural conservation
             max_lddt = max(h.lddt for h in similarity_result.structure_hits)
             active_site_score = max_lddt  # lDDT is already 0-1
+
+            # Extract aligned regions from top Foldseek hits (1-indexed for PDB residue numbering)
+            for hit in similarity_result.structure_hits[:3]:
+                if hit.qstart > 0 and hit.qend > 0 and hit.qend >= hit.qstart:
+                    aligned_regions.append([hit.qstart, hit.qend])
 
             # Refine with pocket RMSD if query structure available
             if pdb_string:
@@ -328,6 +334,7 @@ async def screen_sequence(
             pdb_string=pdb_string,
             pocket_residues=pocket_residues,
             danger_residues=danger_residues,
+            aligned_regions=aligned_regions,
             risk_factors=risk_factors,
             warnings=warnings,
         )

@@ -126,6 +126,10 @@ class ScreeningResult(BaseModel):
     danger_residues: list[int] = Field(
         default_factory=list, description="Residue indices matching toxin active sites"
     )
+    aligned_regions: list[list[int]] = Field(
+        default_factory=list,
+        description="Regions of query structurally aligned to toxin, as [start, end] pairs (1-indexed, inclusive)",
+    )
     risk_factors: dict[str, Any] = Field(
         default_factory=dict,
         description="Intermediate signals contributing to the risk score",

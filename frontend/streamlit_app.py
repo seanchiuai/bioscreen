@@ -78,10 +78,20 @@ def screen_sequence(
         return {"success": False, "error": f"Request failed: {str(e)}"}
 
 
+def _aligned_residue_set(aligned_regions: list[list[int]]) -> list[int]:
+    """Expand [start, end] pairs into a flat list of residue indices."""
+    residues = []
+    for region in aligned_regions:
+        if len(region) == 2:
+            residues.extend(range(region[0], region[1] + 1))
+    return residues
+
+
 def render_protein_3d(
     pdb_string: str,
     pocket_residues: list[int],
     danger_residues: list[int],
+    aligned_regions: list[list[int]] | None = None,
     view_style: str = "Cartoon",
     color_mode: str = "Default",
     width: int = 600,
@@ -93,69 +103,106 @@ def render_protein_3d(
         pdb_string: PDB format string from ESMFold.
         pocket_residues: Residue indices for active site pockets (orange).
         danger_residues: Residue indices matching toxin active sites (red).
+        aligned_regions: Regions structurally aligned to toxin, as [start, end] pairs.
         view_style: One of "Cartoon", "Surface", "Stick".
-        color_mode: "Default" for light blue or "pLDDT" for confidence coloring.
+        color_mode: "Default", "pLDDT", or "Risk Layers".
         width: Viewer width in pixels.
         height: Viewer height in pixels.
     """
     view = py3Dmol.view(width=width, height=height)
     view.addModel(pdb_string, "pdb")
 
-    # Base style depends on view_style and color_mode
-    if color_mode == "pLDDT":
-        # ESMFold stores pLDDT in the B-factor column (0-100)
-        color_spec = {
-            "prop": "b",
-            "gradient": "roygb",
-            "min": 50,
-            "max": 100,
-        }
+    if color_mode == "Risk Layers":
+        # Layer 1 (global): gray base, yellow for structurally aligned regions
+        if view_style == "Cartoon":
+            view.setStyle({"cartoon": {"color": "#b0b0b0"}})
+        elif view_style == "Surface":
+            view.setStyle({"cartoon": {"color": "#b0b0b0", "opacity": 0.5}})
+            view.addSurface(py3Dmol.VDW, {"opacity": 0.5, "color": "#b0b0b0"})
+        elif view_style == "Stick":
+            view.setStyle({"stick": {"color": "#b0b0b0"}})
+
+        # Highlight aligned backbone regions in yellow
+        aligned_res = _aligned_residue_set(aligned_regions or [])
+        if aligned_res:
+            if view_style == "Cartoon":
+                view.addStyle({"resi": aligned_res}, {"cartoon": {"color": "#fbbf24"}})
+            elif view_style == "Surface":
+                view.addStyle({"resi": aligned_res}, {"cartoon": {"color": "#fbbf24", "opacity": 0.5}})
+                view.addSurface(py3Dmol.VDW, {"opacity": 0.5, "color": "#fbbf24"}, {"resi": aligned_res})
+            elif view_style == "Stick":
+                view.addStyle({"resi": aligned_res}, {"stick": {"color": "#fbbf24"}})
+
+        # Layer 2 (local): pocket residues in orange, danger residues in red
+        if pocket_residues:
+            view.addStyle(
+                {"resi": pocket_residues},
+                {"stick": {"color": "orange", "radius": 0.2}},
+            )
+        if danger_residues:
+            view.addStyle(
+                {"resi": danger_residues},
+                {"stick": {"color": "red", "radius": 0.3}},
+            )
+            view.addSurface(
+                py3Dmol.VDW,
+                {"opacity": 0.3, "color": "red"},
+                {"resi": danger_residues},
+            )
     else:
-        color_spec = "lightblue"
-
-    if view_style == "Cartoon":
+        # Original color modes (Default / pLDDT)
         if color_mode == "pLDDT":
-            view.setStyle({"cartoon": {"colorscheme": color_spec}})
+            color_spec = {
+                "prop": "b",
+                "gradient": "roygb",
+                "min": 50,
+                "max": 100,
+            }
         else:
-            view.setStyle({"cartoon": {"color": color_spec}})
-    elif view_style == "Surface":
-        # Show cartoon underneath, then add surface
-        if color_mode == "pLDDT":
-            view.setStyle({"cartoon": {"colorscheme": color_spec, "opacity": 0.5}})
+            color_spec = "lightblue"
+
+        if view_style == "Cartoon":
+            if color_mode == "pLDDT":
+                view.setStyle({"cartoon": {"colorscheme": color_spec}})
+            else:
+                view.setStyle({"cartoon": {"color": color_spec}})
+        elif view_style == "Surface":
+            if color_mode == "pLDDT":
+                view.setStyle({"cartoon": {"colorscheme": color_spec, "opacity": 0.5}})
+                view.addSurface(
+                    py3Dmol.VDW,
+                    {"opacity": 0.7, "colorscheme": color_spec},
+                )
+            else:
+                view.setStyle({"cartoon": {"color": color_spec, "opacity": 0.5}})
+                view.addSurface(
+                    py3Dmol.VDW,
+                    {"opacity": 0.7, "color": color_spec},
+                )
+        elif view_style == "Stick":
+            if color_mode == "pLDDT":
+                view.setStyle({"stick": {"colorscheme": color_spec}})
+            else:
+                view.setStyle({"stick": {"color": color_spec}})
+
+        # Highlight pocket residues in orange (stick representation)
+        if pocket_residues:
+            view.addStyle(
+                {"resi": pocket_residues},
+                {"stick": {"color": "orange", "radius": 0.2}},
+            )
+
+        # Highlight danger residues in red (thick stick + transparent surface)
+        if danger_residues:
+            view.addStyle(
+                {"resi": danger_residues},
+                {"stick": {"color": "red", "radius": 0.3}},
+            )
             view.addSurface(
                 py3Dmol.VDW,
-                {"opacity": 0.7, "colorscheme": color_spec},
+                {"opacity": 0.3, "color": "red"},
+                {"resi": danger_residues},
             )
-        else:
-            view.setStyle({"cartoon": {"color": color_spec, "opacity": 0.5}})
-            view.addSurface(
-                py3Dmol.VDW,
-                {"opacity": 0.7, "color": color_spec},
-            )
-    elif view_style == "Stick":
-        if color_mode == "pLDDT":
-            view.setStyle({"stick": {"colorscheme": color_spec}})
-        else:
-            view.setStyle({"stick": {"color": color_spec}})
-
-    # Highlight pocket residues in orange (stick representation)
-    if pocket_residues:
-        view.addStyle(
-            {"resi": pocket_residues},
-            {"stick": {"color": "orange", "radius": 0.2}},
-        )
-
-    # Highlight danger residues in red (thick stick + transparent surface)
-    if danger_residues:
-        view.addStyle(
-            {"resi": danger_residues},
-            {"stick": {"color": "red", "radius": 0.3}},
-        )
-        view.addSurface(
-            py3Dmol.VDW,
-            {"opacity": 0.3, "color": "red"},
-            {"resi": danger_residues},
-        )
 
     view.zoomTo()
     view.spin(False)
@@ -534,31 +581,61 @@ def main():
                         horizontal=True, key="view_style",
                     )
                 with col_color:
+                    color_options = ["Default", "pLDDT", "Risk Layers"]
                     color_mode = st.radio(
-                        "Color", ["Default", "pLDDT"],
+                        "Color", color_options,
                         horizontal=True, key="color_mode",
-                        help="pLDDT: ESMFold confidence (blue=high, red=low)",
+                        help="Risk Layers: gray=no match, yellow=structurally aligned to toxin, orange=pocket, red=active site match",
                     )
 
                 pocket_res = data.get("pocket_residues", [])
                 danger_res = data.get("danger_residues", [])
+                aligned_regions = data.get("aligned_regions", [])
 
                 render_protein_3d(
                     pdb_string=pdb_string,
                     pocket_residues=pocket_res,
                     danger_residues=danger_res,
+                    aligned_regions=aligned_regions,
                     view_style=view_style,
                     color_mode=color_mode,
                     width=800,
                     height=500,
                 )
 
-                legend_parts = ["Blue: normal structure"]
-                if pocket_res:
-                    legend_parts.append(f"Orange: active site pocket ({len(pocket_res)} residues)")
-                if danger_res:
-                    legend_parts.append(f"Red: danger residues ({len(danger_res)} residues)")
-                st.caption(" | ".join(legend_parts))
+                # Dynamic legend based on color mode
+                if color_mode == "Risk Layers":
+                    aligned_res = _aligned_residue_set(aligned_regions)
+                    legend_parts = ["Gray: no structural match"]
+                    if aligned_res:
+                        legend_parts.append(f"Yellow: structurally aligned to toxin ({len(aligned_res)} residues)")
+                    if pocket_res:
+                        legend_parts.append(f"Orange: active site pocket ({len(pocket_res)} residues)")
+                    if danger_res:
+                        legend_parts.append(f"Red: active site match ({len(danger_res)} residues)")
+                    st.caption(" | ".join(legend_parts))
+
+                    # Framing: explain fold-level vs residue-level risk
+                    if danger_res or aligned_res:
+                        top_match = data.get("top_matches", [{}])[0] if data.get("top_matches") else {}
+                        match_name = top_match.get("name", "a known toxin")
+                        st.markdown(f"""
+                        <div class="recommend-box" style="margin-top: 0.5rem;">
+                            <strong>Interpreting this view:</strong> The yellow regions show where this protein's
+                            backbone folds like <em>{match_name}</em>. Red highlights mark residues whose
+                            geometry matches the toxin's functional site. Danger is a property of the
+                            <strong>overall fold</strong> positioning these residues — not the residues alone.
+                            Mutating red residues does not necessarily make the protein safe, because the
+                            surrounding scaffold exists to position them.
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    legend_parts = ["Blue: normal structure"]
+                    if pocket_res:
+                        legend_parts.append(f"Orange: active site pocket ({len(pocket_res)} residues)")
+                    if danger_res:
+                        legend_parts.append(f"Red: danger residues ({len(danger_res)} residues)")
+                    st.caption(" | ".join(legend_parts))
             else:
                 st.info("Structure analysis was not run. Enable 'Structure analysis' and re-screen to see the 3D viewer.")
 
