@@ -38,7 +38,7 @@ from app.api.routes import router
 from app.monitoring.analyzer import SessionAnalyzer
 from app.monitoring.schemas import AnomalyAlert, ConvergenceResult, PerturbationResult
 from app.monitoring.session_store import SessionStore
-from app.pipeline.sequence import SequenceType
+from app.pipeline.sequence import SequenceType, ValidationResult
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -117,8 +117,11 @@ def _enter_pipeline_patches(stack: ExitStack) -> None:
     sim_result = _similarity_result()
     func_pred = _function_prediction()
 
+    _valid_result = ValidationResult(
+        valid=True, sequence_type=SequenceType.PROTEIN, cleaned=SEQUENCE
+    )
     stack.enter_context(
-        patch("app.api.routes.validate_sequence", return_value=SequenceType.PROTEIN)
+        patch("app.api.routes.validate_sequence", return_value=_valid_result)
     )
     mock_sc = stack.enter_context(patch("app.api.routes.CombinedSimilaritySearcher"))
     mock_fp = stack.enter_context(patch("app.api.routes.get_function_predictor"))
