@@ -83,6 +83,17 @@ def get_session_state(session_id: str) -> dict | None:
     return None
 
 
+def get_function_result(sequence_id: str) -> dict | None:
+    """Poll for background InterPro function prediction. Returns None if still processing."""
+    try:
+        resp = requests.get(f"{API_BASE_URL}/function/{sequence_id}", timeout=10)
+        if resp.status_code == 200:
+            return resp.json()
+    except requests.exceptions.RequestException:
+        pass
+    return None
+
+
 def get_session_alerts(session_id: str) -> dict | None:
     """Fetch anomaly alerts for a session."""
     try:

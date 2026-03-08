@@ -8,6 +8,7 @@ import streamlit.components.v1 as components
 
 from components.summary_cards import render_summary_cards
 from components.protein_3d import render_protein_3d, _aligned_residue_set
+from components.api_client import get_function_result
 
 try:
     from video_generator import ProteinVideoData, generate_video
@@ -241,6 +242,16 @@ def render_results(data: dict, key_prefix: str = "") -> None:
 
     # ── Tab 4: Function ──────────────────────────────────────────────────
     with tabs[4]:
+        # Check if a real InterPro result has arrived in the background
+        sequence_id = data.get("sequence_id")
+        if sequence_id:
+            real_fn = get_function_result(sequence_id)
+            if real_fn is not None:
+                # Swap in real data
+                data["function_prediction"] = real_fn
+            else:
+                st.caption("⏳ Fetching detailed function annotations from InterPro (30–60s)… refresh to update.")
+
         function_pred = data.get("function_prediction")
         if function_pred:
             summary = function_pred.get("summary", "")

@@ -41,12 +41,28 @@ router = APIRouter()
 # Global function predictor instance
 _function_predictor = None
 
+# In-memory store for background InterPro results: sequence_id -> FunctionPrediction
+_function_results: Dict[str, FunctionPrediction] = {}
+
+
 def get_function_predictor() -> FunctionPredictor:
     """Get the global FunctionPredictor instance."""
     global _function_predictor
     if _function_predictor is None:
         _function_predictor = FunctionPredictor()
     return _function_predictor
+
+
+async def _run_interpro_background(sequence_id: str, sequence: str) -> None:
+    """Fire-and-forget task: fetch real InterPro prediction and cache it."""
+    try:
+        predictor = get_function_predictor()
+        result = await predictor._interpro.predict(sequence)
+        if result is not None:
+            _function_results[sequence_id] = result
+            logger.info("InterPro result ready for {}", sequence_id)
+    except Exception as e:
+        logger.warning("Background InterPro failed for {}: {}", sequence_id, e)
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -191,7 +207,9 @@ async def screen_sequence(
 
         # Function prediction (run in thread to avoid blocking event loop)
         function_predictor = get_function_predictor()
-        function_prediction = await function_predictor.predict_async(request_data.sequence)
+        # Use mock immediately for fast response; fire InterPro in background
+        function_prediction = function_predictor.predict(request_data.sequence)
+        asyncio.create_task(_run_interpro_background(sequence_id, request_data.sequence))
 
         # Convert similarity hits to ToxinMatch objects
         top_matches = []
@@ -482,6 +500,17 @@ async def compare_structures(
         rmsd=result.rmsd,
         aligned_residues=result.aligned_residues,
     )
+
+
+@router.get("/function/{sequence_id}", response_model=FunctionPrediction)
+async def get_function_result(sequence_id: str) -> FunctionPrediction:
+    """Poll for background InterPro function prediction result.
+
+    Returns 202 (still processing) or 200 with the result once ready.
+    """
+    if sequence_id not in _function_results:
+        raise HTTPException(status_code=202, detail="still processing")
+    return _function_results[sequence_id]
 
 
 @router.get("/session/{session_id}", response_model=SessionState)
