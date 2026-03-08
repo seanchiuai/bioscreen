@@ -4,5 +4,8 @@ __pycache__/
 data/toxin_structures/
 data/foldseek_db/
 data/foldseek_toxin_db/
+data/*.faiss
+data/*.index
+data/*.json
 venv/
 .claude/
