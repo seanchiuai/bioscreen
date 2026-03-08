@@ -258,6 +258,41 @@ def test_screening_request_min_length():
 
 # ── Toxin database integration ───────────────────────────────────────────────
 
+# ── Edge cases ────────────────────────────────────────────────────────────────
+
+def test_validate_very_long_sequence():
+    """Long sequences should still validate (truncation is handled by ESM-2)."""
+    seq = 'M' + 'A' * 5000
+    result = validate_protein_sequence(seq)
+    assert result.valid
+
+def test_validate_whitespace_stripped():
+    result = validate_protein_sequence('  MVLSPADKTN  ')
+    assert result.valid
+    assert result.cleaned.strip() == result.cleaned
+
+def test_validate_lowercase_accepted():
+    result = validate_protein_sequence('mvlspadktn')
+    assert result.valid
+
+def test_score_with_all_none_structure():
+    """Score should work when structure is explicitly None."""
+    score, explanation = compute_score(0.5, None, 0.5)
+    assert 0.0 <= score <= 1.0
+    assert 'structural analysis not performed' in explanation
+
+def test_screening_request_rejects_empty():
+    with pytest.raises(Exception):
+        ScreeningRequest(sequence="")
+
+def test_function_predictor_empty_sequence():
+    """Empty-ish sequence should not crash the mock predictor."""
+    predictor = MockFunctionPredictor()
+    result = predictor.predict('M')
+    assert result.summary
+
+# ── Toxin database integration ───────────────────────────────────────────────
+
 def test_toxin_db_loads():
     from app.database.toxin_db import ToxinDatabase
     db = ToxinDatabase(index_path='data/toxin_db.faiss', meta_path='data/toxin_meta.json')

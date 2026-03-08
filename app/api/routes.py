@@ -133,11 +133,23 @@ async def screen_sequence(
 
     try:
         # Validate sequence
-        seq_type = validate_sequence(request_data.sequence)
-        if seq_type != SequenceType.PROTEIN:
+        validation = validate_sequence(request_data.sequence)
+        if not validation.valid:
             raise HTTPException(
                 status_code=400,
-                detail=f"Only protein sequences are supported, got {seq_type.value}",
+                detail=f"Invalid sequence: {validation.message}",
+            )
+        if validation.sequence_type != SequenceType.PROTEIN:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Only protein sequences are supported, got {validation.sequence_type.value}",
+            )
+
+        # Reject extremely long sequences (>5000 aa) to prevent resource exhaustion
+        if len(request_data.sequence) > 5000:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Sequence too long ({len(request_data.sequence)} aa). Maximum is 5000.",
             )
 
         # Generate sequence ID if not provided
