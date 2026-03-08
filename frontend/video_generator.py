@@ -166,8 +166,8 @@ def _draw_overlay(
             return (end - t) / fade_dur
         return 1.0
 
-    # --- Title card (0-2s) ---
-    title_fade = _fade(t_sec, 0, 2.0)
+    # --- Title card (0-3s) ---
+    title_fade = _fade(t_sec, 0, 3.0)
     if title_fade > 0:
         a = _alpha(220, title_fade)
         # Background box
@@ -194,8 +194,8 @@ def _draw_overlay(
                   fill=(120, 120, 150, _alpha(255, title_fade)),
                   font=font_xs, anchor="mm")
 
-    # --- Stats panel (2-9.5s) ---
-    stats_fade = _fade(t_sec, 2.0, 9.5)
+    # --- Stats panel (3-9.5s) ---
+    stats_fade = _fade(t_sec, 3.0, 9.5)
     if stats_fade > 0:
         a = _alpha(210, stats_fade)
         panel_x, panel_y = 16, 16
@@ -331,8 +331,8 @@ def generate_video(video_data: ProteinVideoData, fps: int = FPS, duration: float
     """Generate an MP4 by capturing the py3Dmol WebGL viewer with Playwright.
 
     Video timeline:
-      0-2s   : Title card over slowly rotating structure
-      2-7s   : Full 360° rotation with stats panel
+      0-3s   : Title card over slowly rotating structure
+      3-7s   : Full 360° rotation with stats panel
       7-9.5s : Zoom into danger zone
       9.5-12s: Zoom out, final verdict overlay
     """
