@@ -69,7 +69,7 @@ class Settings(BaseSettings):
         0.75, description="Score above which risk is HIGH"
     )
     risk_medium_threshold: float = Field(
-        0.45, description="Score above which risk is MEDIUM"
+        0.50, description="Score above which risk is MEDIUM"
     )
 
     @property

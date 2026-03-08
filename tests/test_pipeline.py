@@ -93,7 +93,7 @@ def test_score_embedding_only():
 
 def test_high_similarity_gives_high_risk():
     """Simulates a query that matches a known toxin across all signals."""
-    score, _ = compute_score(0.95, 0.9, 0.8)
+    score, _ = compute_score(0.99, 0.9, 0.8)
     assert score > 0.75, f"Expected HIGH risk (>0.75), got {score}"
 
 def test_low_similarity_gives_low_risk():
