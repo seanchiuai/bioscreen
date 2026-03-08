@@ -70,7 +70,7 @@ def render_results(data: dict, key_prefix: str = "") -> None:
                 df["Structure Sim"] = "\u2014"
                 col_config["Structure Sim"] = st.column_config.TextColumn("Structure Sim")
 
-            st.dataframe(df, column_config=col_config, use_container_width=True, hide_index=True)
+            st.dataframe(df, column_config=col_config, width="stretch", hide_index=True)
         else:
             st.info("No significant matches found.")
 
@@ -628,7 +628,7 @@ def render_results(data: dict, key_prefix: str = "") -> None:
             generate_clicked = st.button(
                 "Generate Video Analysis",
                 key=f"{key_prefix}gen_video",
-                use_container_width=True,
+                width="stretch",
                 type="primary",
             )
         if generate_clicked:
@@ -653,7 +653,7 @@ def render_results(data: dict, key_prefix: str = "") -> None:
                         data=video_bytes,
                         file_name="bioscreen_analysis.mp4",
                         mime="video/mp4",
-                        use_container_width=True,
+                        width="stretch",
                     )
                 except Exception as e:
                     st.error(f"Video generation failed: {e}")

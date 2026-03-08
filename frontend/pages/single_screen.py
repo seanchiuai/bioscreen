@@ -80,7 +80,7 @@ def page():
             "Screen Sequence",
             type="primary",
             disabled=not sequence_input.strip(),
-            use_container_width=True,
+            width="stretch",
         )
 
     # Validation feedback

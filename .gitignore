@@ -11,3 +11,4 @@ venv/
 .claude/
 venv312/
 *.zip
+.DS_Store

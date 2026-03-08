@@ -203,7 +203,7 @@ def page() -> None:
 
         with col_table:
             st.subheader("Results Summary")
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
 
         with col_chart:
             st.subheader("Risk Trend")
