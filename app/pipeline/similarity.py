@@ -42,6 +42,8 @@ class StructureHit:
     lddt: float = 0.0
     aligned_length: int = 0
     query_coverage: float = 0.0
+    qstart: int = 0          # 0-indexed start of aligned region in query
+    qend: int = 0            # 0-indexed end of aligned region in query
     raw_line: str = ""
 
 
@@ -137,7 +139,7 @@ class FoldseekSearcher:
         qstart, qend, tstart, tend, evalue, bits
 
         When ``--format-output`` includes ``lddt`` and ``qtmscore``, columns shift.
-        We request: query,target,qtmscore,lddt,alnlen,qcov
+        We request: query,target,qtmscore,lddt,alnlen,qcov,qstart,qend
         """
         hits: list[StructureHit] = []
         for line in m8_text.strip().splitlines():
@@ -152,6 +154,8 @@ class FoldseekSearcher:
                 lddt = float(parts[3]) if len(parts) > 3 else 0.0
                 aln_len = int(parts[4]) if len(parts) > 4 else 0
                 qcov = float(parts[5]) if len(parts) > 5 else 0.0
+                qstart = int(parts[6]) if len(parts) > 6 else 0
+                qend = int(parts[7]) if len(parts) > 7 else 0
                 hits.append(
                     StructureHit(
                         target_id=target_id,
@@ -159,6 +163,8 @@ class FoldseekSearcher:
                         lddt=lddt,
                         aligned_length=aln_len,
                         query_coverage=qcov,
+                        qstart=qstart,
+                        qend=qend,
                         raw_line=line,
                     )
                 )
@@ -204,7 +210,7 @@ class FoldseekSearcher:
                 str(self._settings.foldseek_db_path),
                 str(result_file),
                 str(tmp_foldseek),
-                "--format-output", "query,target,qtmscore,lddt,alnlen,qcov",
+                "--format-output", "query,target,qtmscore,lddt,alnlen,qcov,qstart,qend",
                 "-s", str(sensitivity),
                 "--max-seqs", str(top_k * 2),
                 "--threads", "4",
