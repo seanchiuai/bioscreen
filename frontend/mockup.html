@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioScreen — UI Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #f4f2ee;
+    --bg-card: #fffffe;
+    --bg-elevated: #ffffff;
+    --bg-input: #f8f7f4;
+    --bg-subtle: #eceae4;
+
+    --border-default: #e0ddd6;
+    --border-light: #eae8e2;
+    --border-focus: #1a1a1a;
+
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b6560;
+    --text-tertiary: #9c9690;
+    --text-inverse: #fffffe;
+
+    --accent: #1a1a1a;
+    --accent-subtle: #f0efec;
+
+    --risk-low: #2a9d5c;
+    --risk-low-bg: #edfbf2;
+    --risk-low-border: #b8eacc;
+    --risk-medium: #d48c0e;
+    --risk-medium-bg: #fef8ec;
+    --risk-medium-border: #f5dfa0;
+    --risk-high: #dc3545;
+    --risk-high-bg: #fef2f2;
+    --risk-high-border: #f5c1c1;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-glow-low: 0 0 20px rgba(42,157,92,0.12);
+    --shadow-glow-medium: 0 0 20px rgba(212,140,14,0.12);
+    --shadow-glow-high: 0 0 20px rgba(220,53,69,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 2rem 4rem;
+  }
+
+  /* ── Header ──────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+  .header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+  .logo-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--risk-high);
+    margin-left: 2px;
+    vertical-align: super;
+    font-size: 0;
+  }
+  .tagline {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.01em;
+    padding-bottom: 4px;
+  }
+  .nav-pills {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-md);
+    padding: 3px;
+  }
+  .nav-pill {
+    padding: 7px 18px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+  }
+  .nav-pill:hover { color: var(--text-primary); }
+  .nav-pill.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--risk-low);
+    background: var(--risk-low-bg);
+    border: 1px solid var(--risk-low-border);
+    border-radius: 999px;
+    padding: 4px 12px 4px 8px;
+    margin-left: 1.5rem;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--risk-low);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── Input Section ───────────────────────────────── */
+  .input-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .input-section-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 0.75rem;
+  }
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.25rem;
+  }
+  .seq-textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-input);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    resize: vertical;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+  .seq-textarea::placeholder { color: var(--text-tertiary); }
+  .seq-textarea:focus { outline: none; border-color: var(--border-focus); }
+
+  .controls-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .select-wrap {
+    position: relative;
+  }
+  .select-input {
+    width: 100%;
+    padding: 0.6rem 2rem 0.6rem 0.85rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    font-family: inherit;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    appearance: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .select-input:focus { outline: none; border-color: var(--border-focus); }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: 0.7rem;
+    pointer-events: none;
+  }
+  .input-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  .text-input {
+    flex: 1;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    font-family: inherit;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+  }
+  .text-input::placeholder { color: var(--text-tertiary); }
+  .text-input:focus { outline: none; border-color: var(--border-focus); }
+  .topk-input {
+    width: 70px;
+    text-align: center;
+    padding: 0.6rem 0.5rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+  }
+  .topk-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+  .btn-screen {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--text-primary);
+    color: var(--text-inverse);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+    margin-top: auto;
+  }
+  .btn-screen:hover { background: #333; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+  /* ── Section Label ───────────────────────────────── */
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+  }
+
+  /* ── Tab Bar ─────────────────────────────────────── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: 1.5rem;
+  }
+  .tab-item {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: inherit;
+  }
+  .tab-item:hover { color: var(--text-primary); }
+  .tab-item.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* ── Summary Cards ───────────────────────────────── */
+  .cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.3s, transform 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+  .card-risk::before { background: linear-gradient(90deg, var(--risk-high), var(--risk-medium)); }
+  .card-risk { box-shadow: var(--shadow-sm), var(--shadow-glow-high); }
+  .card-match::before { background: linear-gradient(90deg, var(--accent), var(--text-tertiary)); }
+  .card-mode::before { background: linear-gradient(90deg, var(--risk-low), #4ade80); }
+
+  .card-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 0.6rem;
+  }
+  .card-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+  .card-value.risk-high { color: var(--risk-high); }
+  .card-value.risk-medium { color: var(--risk-medium); }
+  .card-value.risk-low { color: var(--risk-low); }
+
+  .risk-bar {
+    height: 6px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+  .risk-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .risk-bar-fill.high {
+    background: linear-gradient(90deg, var(--risk-medium), var(--risk-high));
+  }
+  .risk-bar-fill.medium {
+    background: linear-gradient(90deg, var(--risk-low), var(--risk-medium));
+  }
+  .risk-bar-fill.low {
+    background: linear-gradient(90deg, #6ee7a0, var(--risk-low));
+  }
+  .risk-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .risk-badge.high { background: var(--risk-high-bg); color: var(--risk-high); }
+  .risk-badge.medium { background: var(--risk-medium-bg); color: var(--risk-medium); }
+  .risk-badge.low { background: var(--risk-low-bg); color: var(--risk-low); }
+
+  .match-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .match-organism {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-bottom: 0.6rem;
+  }
+  .match-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .match-score-type {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-left: 4px;
+  }
+  .mode-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+  }
+  .mode-detail {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+  }
+  .mode-badges {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .mode-badge {
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+  }
+
+  /* ── Score Breakdown ─────────────────────────────── */
+  .score-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+  }
+  .score-row {
+    display: grid;
+    grid-template-columns: 160px 1fr 60px;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .score-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    text-align: right;
+    font-weight: 500;
+  }
+  .score-track {
+    height: 28px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    position: relative;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, #1a1a1a, #444);
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+  }
+  .score-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 30px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15));
+  }
+  .score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
+  }
+  .score-meta {
+    grid-column: 2;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    margin-top: -0.6rem;
+    margin-bottom: 0.5rem;
+  }
+  .score-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+    margin-top: 0.5rem;
+  }
+  .score-total-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .score-total-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  /* ── Verdict ─────────────────────────────────────── */
+  .verdict-card {
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .verdict-card.high {
+    background: var(--risk-high-bg);
+    border: 1px solid var(--risk-high-border);
+    color: var(--risk-high);
+    box-shadow: var(--shadow-glow-high);
+  }
+  .verdict-card.medium {
+    background: var(--risk-medium-bg);
+    border: 1px solid var(--risk-medium-border);
+    color: var(--risk-medium);
+    box-shadow: var(--shadow-glow-medium);
+  }
+  .verdict-card.low {
+    background: var(--risk-low-bg);
+    border: 1px solid var(--risk-low-border);
+    color: var(--risk-low);
+    box-shadow: var(--shadow-glow-low);
+  }
+  .verdict-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Recommendation ──────────────────────────────── */
+  .recommend-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-left: 3px solid var(--text-primary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: 1rem 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    box-shadow: var(--shadow-sm);
+  }
+  .recommend-card strong { color: var(--text-primary); }
+
+  /* ── Matches Table ───────────────────────────────── */
+  .matches-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+  }
+  .matches-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .matches-table thead th {
+    background: var(--bg-subtle);
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-default);
+  }
+  .matches-table tbody td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+  .matches-table tbody tr:last-child td { border-bottom: none; }
+  .matches-table tbody tr:hover { background: var(--bg-input); }
+  .matches-table .rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    width: 50px;
+  }
+  .sim-bar-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sim-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 60px;
+  }
+  .sim-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--text-primary);
+    opacity: 0.7;
+  }
+  .sim-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    min-width: 44px;
+    text-align: right;
+  }
+
+  /* ── Structure Viewer Placeholder ────────────────── */
+  .viewer-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+  }
+  .viewer-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .viewer-toggle-group {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .viewer-toggle {
+    padding: 5px 14px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+  }
+  .viewer-toggle.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .viewer-placeholder {
+    height: 420px;
+    background: linear-gradient(135deg, #f0efec 0%, #e8e6e0 50%, #f0efec 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .viewer-placeholder::before {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 2px solid var(--border-default);
+    border-radius: 50%;
+    animation: rotate-ring 20s linear infinite;
+    opacity: 0.4;
+  }
+  .viewer-placeholder::after {
+    content: '';
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border: 1px dashed var(--border-default);
+    border-radius: 50%;
+    animation: rotate-ring 15s linear infinite reverse;
+    opacity: 0.3;
+  }
+  @keyframes rotate-ring {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .viewer-placeholder-text {
+    position: relative;
+    z-index: 1;
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+  }
+  .viewer-placeholder-icon {
+    position: relative;
+    z-index: 1;
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.4;
+  }
+  .viewer-legend {
+    display: flex;
+    gap: 1rem;
+    padding: 0.6rem 1.25rem;
+    border-top: 1px solid var(--border-light);
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+
+  /* ── Function Cards ──────────────────────────────── */
+  .func-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .func-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s;
+  }
+  .func-card:hover { box-shadow: var(--shadow-md); }
+  .func-card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+  }
+  .func-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-subtle);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .func-name {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .func-bar {
+    height: 4px;
+    background: var(--bg-subtle);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 0.4rem;
+  }
+  .func-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--text-primary);
+    opacity: 0.6;
+  }
+
+  /* ── Evidence / Explain ──────────────────────────── */
+  .evidence-section {
+    margin-bottom: 1.5rem;
+  }
+  .evidence-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 0.75rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .evidence-block-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  .evidence-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .evidence-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .evidence-text {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* ── Footer ──────────────────────────────────────── */
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Divider label ───────────────────────────────── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0 1.5rem;
+  }
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+  }
+  .section-divider span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Animations ──────────────────────────────────── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in {
+    animation: fadeInUp 0.4s ease-out both;
+  }
+  .delay-1 { animation-delay: 0.05s; }
+  .delay-2 { animation-delay: 0.1s; }
+  .delay-3 { animation-delay: 0.15s; }
+  .delay-4 { animation-delay: 0.2s; }
+  .delay-5 { animation-delay: 0.25s; }
+  .delay-6 { animation-delay: 0.3s; }
+
+  /* ── Copy / Video buttons ────────────────────────── */
+  .bottom-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+  .btn-secondary {
+    padding: 0.55rem 1.1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: var(--border-focus);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary {
+    padding: 0.55rem 1.1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--text-primary);
+    color: var(--text-inverse);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    background: #333;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="header animate-in">
+    <div style="display:flex; flex-direction:column; gap:0.25rem;">
+      <div class="header-left">
+        <span class="logo">BioScreen<span class="logo-dot"></span></span>
+        <span class="status-pill">
+          <span class="status-dot"></span>
+          API Connected
+        </span>
+      </div>
+      <span class="tagline">Structure-based biosecurity screening for AI-designed proteins</span>
+    </div>
+    <nav class="nav-pills">
+      <button class="nav-pill active">Single Screen</button>
+      <button class="nav-pill">Session Analysis</button>
+    </nav>
+  </header>
+
+  <!-- ═══ INPUT ═══ -->
+  <section class="input-section animate-in delay-1">
+    <div class="input-section-label">Sequence Input</div>
+    <div class="input-grid">
+      <div>
+        <textarea class="seq-textarea" placeholder="Paste protein sequence here (FASTA headers auto-stripped)...">MKWMRFLFLLSVPGVFG...</textarea>
+        <div style="margin-top:0.5rem;">
+          <input class="text-input" placeholder="Sequence ID (optional)" style="width:100%;" value="Query-001">
+        </div>
+      </div>
+      <div class="controls-stack">
+        <div class="select-wrap">
+          <select class="select-input">
+            <option>Scorpion toxin Aah4 (HIGH)</option>
+            <option>Irditoxin snake venom (HIGH)</option>
+            <option>Human lysozyme (LOW)</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <span class="topk-label">Top K</span>
+          <input class="topk-input" type="number" value="5">
+        </div>
+        <div style="flex:1;"></div>
+        <button class="btn-screen">Screen Sequence</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ RESULTS ═══ -->
+
+  <!-- Tab bar -->
+  <div class="tab-bar animate-in delay-2">
+    <button class="tab-item active" onclick="showTab(this, 'overview')">Overview</button>
+    <button class="tab-item" onclick="showTab(this, 'matches')">Matches</button>
+    <button class="tab-item" onclick="showTab(this, 'structure')">Structure</button>
+    <button class="tab-item" onclick="showTab(this, 'scores')">Score Breakdown</button>
+    <button class="tab-item" onclick="showTab(this, 'function')">Function</button>
+    <button class="tab-item" onclick="showTab(this, 'explain')">Explain</button>
+  </div>
+
+  <!-- ── Overview Tab ── -->
+  <div id="tab-overview" class="tab-content">
+    <div class="cards-row">
+      <div class="summary-card card-risk animate-in delay-3">
+        <div class="card-label">Risk Score</div>
+        <div class="card-value risk-high">0.847</div>
+        <div class="risk-bar"><div class="risk-bar-fill high" style="width:84.7%"></div></div>
+        <span class="risk-badge high">HIGH</span>
+      </div>
+      <div class="summary-card card-match animate-in delay-4">
+        <div class="card-label">Top Match</div>
+        <div class="match-name">Scorpion toxin Aah4</div>
+        <div class="match-organism">Androctonus australis</div>
+        <div class="match-score">0.972<span class="match-score-type">structure</span></div>
+      </div>
+      <div class="summary-card card-mode animate-in delay-5">
+        <div class="card-label">Screening Mode</div>
+        <div class="mode-value">Full Pipeline</div>
+        <div class="mode-badges">
+          <span class="mode-badge">Embedding</span>
+          <span class="mode-badge">Structure</span>
+          <span class="mode-badge">Function</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Matches Tab ── -->
+  <div id="tab-matches" class="tab-content" style="display:none;">
+    <div class="matches-table-wrap animate-in delay-3">
+      <table class="matches-table">
+        <thead>
+          <tr>
+            <th style="width:50px;">#</th>
+            <th>Name</th>
+            <th>Organism</th>
+            <th style="width:100px;">Type</th>
+            <th style="width:180px;">Embedding Sim</th>
+            <th style="width:180px;">Structure Sim</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">1</td>
+            <td><strong>Scorpion toxin Aah4</strong></td>
+            <td>Androctonus australis</td>
+            <td>neurotoxin</td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:96.8%"></div></div><span class="sim-num">0.968</span></div></td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:97.2%"></div></div><span class="sim-num">0.972</span></div></td>
+          </tr>
+          <tr>
+            <td class="rank">2</td>
+            <td><strong>Alpha-toxin BmKM1</strong></td>
+            <td>Mesobuthus martensii</td>
+            <td>neurotoxin</td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:94.1%"></div></div><span class="sim-num">0.941</span></div></td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:89.3%"></div></div><span class="sim-num">0.893</span></div></td>
+          </tr>
+          <tr>
+            <td class="rank">3</td>
+            <td><strong>Toxin CsE5</strong></td>
+            <td>Centruroides sculpturatus</td>
+            <td>neurotoxin</td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:91.5%"></div></div><span class="sim-num">0.915</span></div></td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:85.7%"></div></div><span class="sim-num">0.857</span></div></td>
+          </tr>
+          <tr>
+            <td class="rank">4</td>
+            <td><strong>Neurotoxin Ts1</strong></td>
+            <td>Tityus serrulatus</td>
+            <td>neurotoxin</td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:88.2%"></div></div><span class="sim-num">0.882</span></div></td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:81.4%"></div></div><span class="sim-num">0.814</span></div></td>
+          </tr>
+          <tr>
+            <td class="rank">5</td>
+            <td><strong>Charybdotoxin</strong></td>
+            <td>Leiurus quinquestriatus</td>
+            <td>K+ channel blocker</td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:85.9%"></div></div><span class="sim-num">0.859</span></div></td>
+            <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:78.1%"></div></div><span class="sim-num">0.781</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Structure Tab ── -->
+  <div id="tab-structure" class="tab-content" style="display:none;">
+    <div class="viewer-card animate-in delay-3">
+      <div class="viewer-toolbar">
+        <div class="viewer-toggle-group">
+          <button class="viewer-toggle active">Cartoon</button>
+          <button class="viewer-toggle">Surface</button>
+          <button class="viewer-toggle">Stick</button>
+        </div>
+        <div class="viewer-toggle-group">
+          <button class="viewer-toggle active">Default</button>
+          <button class="viewer-toggle">pLDDT</button>
+          <button class="viewer-toggle">Risk Layers</button>
+        </div>
+      </div>
+      <div class="viewer-placeholder">
+        <div class="viewer-placeholder-icon">🧬</div>
+        <div class="viewer-placeholder-text">3D protein viewer renders here (py3Dmol)</div>
+      </div>
+      <div class="viewer-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#94b8d8;"></div> Query protein</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Active site pocket</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Danger residues</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Score Breakdown Tab ── -->
+  <div id="tab-scores" class="tab-content" style="display:none;">
+    <div class="score-section animate-in delay-3">
+      <div class="section-label" style="margin-bottom:1.25rem;">Component Scores</div>
+
+      <div class="score-row">
+        <span class="score-label">Embedding Similarity</span>
+        <div class="score-track"><div class="score-fill" style="width:96.8%"></div></div>
+        <span class="score-num">0.968</span>
+      </div>
+      <div class="score-row" style="margin-bottom:1.5rem;">
+        <span class="score-meta">Weight: 0.50 &middot; Contribution: 0.484</span>
+      </div>
+
+      <div class="score-row">
+        <span class="score-label">Structure Similarity</span>
+        <div class="score-track"><div class="score-fill" style="width:97.2%"></div></div>
+        <span class="score-num">0.972</span>
+      </div>
+      <div class="score-row" style="margin-bottom:1.5rem;">
+        <span class="score-meta">Weight: 0.30 &middot; Contribution: 0.292</span>
+      </div>
+
+      <div class="score-row">
+        <span class="score-label">Function Overlap</span>
+        <div class="score-track"><div class="score-fill" style="width:35.0%"></div></div>
+        <span class="score-num">0.350</span>
+      </div>
+      <div class="score-row" style="margin-bottom:1rem;">
+        <span class="score-meta">Weight: 0.20 &middot; Contribution: 0.070</span>
+      </div>
+
+      <div class="score-total">
+        <span class="score-total-label">Final Risk Score</span>
+        <span class="score-total-value risk-high">0.847</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Function Tab ── -->
+  <div id="tab-function" class="tab-content" style="display:none;">
+    <div class="section-label animate-in delay-3">GO Terms</div>
+    <div class="func-grid animate-in delay-3">
+      <div class="func-card">
+        <div class="func-card-header">
+          <span class="func-id">GO:0005576</span>
+          <span class="func-name">extracellular region</span>
+        </div>
+        <div class="func-bar"><div class="func-bar-fill" style="width:92%"></div></div>
+      </div>
+      <div class="func-card">
+        <div class="func-card-header">
+          <span class="func-id">GO:0006952</span>
+          <span class="func-name">defense response</span>
+        </div>
+        <div class="func-bar"><div class="func-bar-fill" style="width:87%"></div></div>
+      </div>
+      <div class="func-card">
+        <div class="func-card-header">
+          <span class="func-id">GO:0090729</span>
+          <span class="func-name">toxin activity</span>
+        </div>
+        <div class="func-bar"><div class="func-bar-fill" style="width:84%"></div></div>
+      </div>
+      <div class="func-card">
+        <div class="func-card-header">
+          <span class="func-id">GO:0019871</span>
+          <span class="func-name">sodium channel inhibitor</span>
+        </div>
+        <div class="func-bar"><div class="func-bar-fill" style="width:71%"></div></div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:1.5rem;">EC Numbers</div>
+    <div class="func-grid animate-in delay-4">
+      <div class="func-card">
+        <div class="func-card-header">
+          <span class="func-id">EC 3.1.1.7</span>
+          <span class="func-name">acetylcholinesterase</span>
+        </div>
+        <div class="func-bar"><div class="func-bar-fill" style="width:45%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Explain Tab ── -->
+  <div id="tab-explain" class="tab-content" style="display:none;">
+    <div class="verdict-card high animate-in delay-3">
+      <span class="verdict-icon">⚠</span>
+      <span>HIGH RISK — Strong similarity to known toxins detected across multiple evidence lines</span>
+    </div>
+
+    <div class="evidence-section">
+      <div class="evidence-block animate-in delay-4">
+        <div class="evidence-block-header">
+          <span class="evidence-label">Sequence Embedding Similarity</span>
+          <span class="evidence-value risk-high">0.968</span>
+        </div>
+        <p class="evidence-text">The ESM-2 protein language model found very high similarity between this protein's learned representation and those of known toxins. A score above 0.97 means the model considers this sequence to occupy nearly the same region of protein embedding space as established dangerous proteins.</p>
+      </div>
+      <div class="evidence-block animate-in delay-5">
+        <div class="evidence-block-header">
+          <span class="evidence-label">Structural Similarity</span>
+          <span class="evidence-value risk-high">0.972</span>
+        </div>
+        <p class="evidence-text">Foldseek structural alignment found very high 3D fold similarity (TM-score 0.972) between the predicted structure and a known toxin. Structure determines function — two proteins with the same fold can have similar biological activity regardless of sequence differences.</p>
+      </div>
+      <div class="evidence-block animate-in delay-6">
+        <div class="evidence-block-header">
+          <span class="evidence-label">Function Overlap</span>
+          <span class="evidence-value" style="color:var(--text-secondary);">0.350</span>
+        </div>
+        <p class="evidence-text">There is moderate overlap between the predicted functional annotations (GO terms and EC numbers) of this protein and those of the closest toxin match, suggesting some shared biological function.</p>
+      </div>
+    </div>
+
+    <div class="recommend-card animate-in delay-6">
+      <strong>Recommendation:</strong> Immediate review by a biosafety expert is strongly recommended. This protein should not proceed to synthesis or experimental work without thorough manual evaluation. Consider additional wet-lab validation (e.g., functional assays) to confirm or rule out toxin-like activity.
+    </div>
+  </div>
+
+  <!-- Bottom actions -->
+  <div class="bottom-actions animate-in delay-6">
+    <button class="btn-secondary">Copy JSON</button>
+    <button class="btn-primary">Generate Video Analysis</button>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    BioScreen — Structure-based biosecurity screening for AI-designed proteins. For research purposes only.
+  </footer>
+
+</div>
+
+<script>
+function showTab(el, tabId) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  el.classList.add('active');
+  document.getElementById('tab-' + tabId).style.display = 'block';
+}
+
+// Toggle button groups
+document.querySelectorAll('.viewer-toggle-group').forEach(group => {
+  group.querySelectorAll('.viewer-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('.viewer-toggle').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+});
+</script>
+
+</body>
+</html>
