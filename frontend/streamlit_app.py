@@ -18,7 +18,6 @@ import streamlit.components.v1 as components
 # Configuration
 API_BASE_URL = "http://localhost:8000/api"
 
-# Demo sequences for the sidebar selector
 DEMO_SEQUENCES = {
     "-- Select a demo sequence --": "",
     "Insulin (full, 110aa)": "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGGPGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN",
@@ -74,50 +73,6 @@ def screen_sequence(
             }
     except requests.exceptions.RequestException as e:
         return {"success": False, "error": f"Request failed: {str(e)}"}
-
-
-def get_risk_level_color(risk_level: str) -> str:
-    """Get color for risk level display."""
-    color_map = {
-        "LOW": "green",
-        "MEDIUM": "orange",
-        "HIGH": "red",
-        "UNKNOWN": "gray"
-    }
-    return color_map.get(risk_level, "gray")
-
-
-def get_risk_score_color(risk_score: float) -> str:
-    """Get color for risk score display based on thresholds."""
-    if risk_score < 0.5:
-        return "green"
-    elif risk_score < 0.7:
-        return "orange"
-    else:
-        return "red"
-
-
-def format_function_prediction(function_prediction: Optional[dict]) -> str:
-    """Format function prediction for display."""
-    if not function_prediction:
-        return "No function prediction available"
-
-    parts = []
-
-    if function_prediction.get("summary"):
-        parts.append(f"**Summary:** {function_prediction['summary']}")
-
-    if function_prediction.get("go_terms"):
-        go_terms = function_prediction["go_terms"][:3]  # Show top 3
-        go_text = ", ".join([f"{term.get('term', 'Unknown')} ({term.get('confidence', 'N/A')})" for term in go_terms])
-        parts.append(f"**GO Terms:** {go_text}")
-
-    if function_prediction.get("ec_numbers"):
-        ec_numbers = function_prediction["ec_numbers"][:3]  # Show top 3
-        ec_text = ", ".join([f"{ec.get('number', 'Unknown')} ({ec.get('confidence', 'N/A')})" for ec in ec_numbers])
-        parts.append(f"**EC Numbers:** {ec_text}")
-
-    return "\n\n".join(parts) if parts else "No detailed function information available"
 
 
 def render_protein_3d(
@@ -205,60 +160,6 @@ def render_protein_3d(
     # Render into Streamlit via HTML iframe
     html = view._make_html()
     components.html(html, width=width, height=height, scrolling=False)
-
-
-def render_risk_gauge(risk_score: float, risk_level: str) -> None:
-    """Render a colored risk gauge bar with score and level label."""
-    color = get_risk_score_color(risk_score)
-    pct = int(risk_score * 100)
-    level_color = get_risk_level_color(risk_level)
-    st.markdown(
-        f"""
-        <div style="margin-bottom: 0.5rem;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline;">
-            <span style="font-size: 2rem; font-weight: bold;">{risk_score:.3f}</span>
-            <span style="font-size: 1.4rem; font-weight: bold; color: {level_color};">{risk_level}</span>
-          </div>
-          <div style="background: #e0e0e0; border-radius: 6px; height: 18px; margin-top: 4px; overflow: hidden;">
-            <div style="background: {color}; width: {pct}%; height: 100%; border-radius: 6px;
-                        transition: width 0.3s;"></div>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #888; margin-top: 2px;">
-            <span>0 — Safe</span><span>0.5 — Medium</span><span>1.0 — High</span>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_session_monitor(data: dict) -> None:
-    """Render the session monitoring section from screening response data."""
-    factors = data.get("risk_factors", {})
-    anomaly_score = factors.get("session_anomaly_score", 0.0)
-    query_count = st.session_state.get("query_count", 0)
-
-    if anomaly_score > 0.5:
-        anomaly_color = "red"
-        anomaly_label = "convergent pattern detected"
-    elif anomaly_score > 0.3:
-        anomaly_color = "orange"
-        anomaly_label = "elevated"
-    else:
-        anomaly_color = "green"
-        anomaly_label = "normal"
-
-    col_q, col_a = st.columns(2)
-    with col_q:
-        st.metric("Queries this session", query_count)
-    with col_a:
-        st.markdown(
-            f"**Anomaly Score**<br>"
-            f"<span style='font-size:1.6rem; font-weight:bold; color:{anomaly_color};'>"
-            f"{anomaly_score:.2f}</span> "
-            f"<span style='color:{anomaly_color};'>({anomaly_label})</span>",
-            unsafe_allow_html=True,
-        )
 
 
 def inject_custom_css() -> None:
