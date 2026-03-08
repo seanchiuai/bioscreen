@@ -104,6 +104,8 @@ async def list_toxins(
                     organism=meta.get("organism", ""),
                     toxin_type=meta.get("toxin_type", ""),
                     sequence_length=meta.get("sequence_length", 0),
+                    danger_description=meta.get("danger_description", ""),
+                    mechanism=meta.get("mechanism", ""),
                 )
             )
         except Exception as e:
@@ -215,6 +217,9 @@ async def screen_sequence(
                     sequence_identity=seq_identity,
                     go_terms=meta.get("go_terms", []),
                     ec_numbers=meta.get("ec_numbers", []),
+                    danger_description=meta.get("danger_description", ""),
+                    biological_target=meta.get("biological_target", ""),
+                    mechanism=meta.get("mechanism", ""),
                 )
             )
 

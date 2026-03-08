@@ -557,7 +557,8 @@ def main():
                         "Rank": i,
                         "Name": match["name"],
                         "Organism": match["organism"],
-                        "Toxin Type": match["toxin_type"],
+                        "Mechanism": match.get("mechanism", ""),
+                        "Target": match.get("biological_target", ""),
                         "Embedding Sim": match["embedding_similarity"],
                         "Structure Sim": match.get("structure_similarity") if has_structure else None,
                     })
@@ -567,7 +568,8 @@ def main():
                     "Rank": st.column_config.NumberColumn(width="small"),
                     "Name": st.column_config.TextColumn(width="medium"),
                     "Organism": st.column_config.TextColumn(width="medium"),
-                    "Toxin Type": st.column_config.TextColumn(width="small"),
+                    "Mechanism": st.column_config.TextColumn(width="small"),
+                    "Target": st.column_config.TextColumn(width="medium"),
                     "Embedding Sim": st.column_config.ProgressColumn(
                         "Embedding Sim", min_value=0, max_value=1, format="%.3f",
                     ),
@@ -581,6 +583,12 @@ def main():
                     col_config["Structure Sim"] = st.column_config.TextColumn("Structure Sim")
 
                 st.dataframe(df, column_config=col_config, use_container_width=True, hide_index=True)
+
+                # Show danger description for top match
+                top_match = data["top_matches"][0]
+                danger_desc = top_match.get("danger_description", "")
+                if danger_desc:
+                    st.warning(f"**Top match — {top_match['name']}**: {danger_desc}")
             else:
                 st.info("No significant matches found.")
 

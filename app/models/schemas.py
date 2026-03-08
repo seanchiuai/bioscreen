@@ -81,6 +81,9 @@ class ToxinMatch(BaseModel):
     ec_numbers: list[str] = Field(
         default_factory=list, description="EC number annotations"
     )
+    danger_description: str = Field("", description="Human-readable danger description")
+    biological_target: str = Field("", description="What this toxin targets")
+    mechanism: str = Field("", description="Mechanism of action")
 
 
 class FunctionPrediction(BaseModel):
@@ -186,6 +189,8 @@ class ToxinSummary(BaseModel):
     organism: str
     toxin_type: str
     sequence_length: int
+    danger_description: str = ""
+    mechanism: str = ""
 
 
 class ToxinListResponse(BaseModel):
