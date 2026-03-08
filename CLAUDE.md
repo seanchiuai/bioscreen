@@ -57,7 +57,7 @@ The core screening flow for a protein sequence:
 | `/api/screen` | POST | Screen single sequence |
 | `/api/batch` | POST | Screen multiple sequences |
 | `/api/health` | GET | Health/readiness check |
-| `/api/proteins` | GET | List toxin DB entries |
+| `/api/toxins` | GET | List toxin DB entries |
 
 ## Environment Setup
 

@@ -68,8 +68,8 @@ async def health_check(request: Request) -> HealthResponse:
     )
 
 
-@router.get("/proteins", response_model=ToxinListResponse)
-async def list_proteins(
+@router.get("/toxins", response_model=ToxinListResponse)
+async def list_toxins(
     request: Request,
     limit: int = 50,
     offset: int = 0,
