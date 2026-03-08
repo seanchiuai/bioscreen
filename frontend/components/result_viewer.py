@@ -1,0 +1,439 @@
+"""Shared 6-tab result display for BioScreen screening results."""
+
+import json
+import requests
+import pandas as pd
+import streamlit as st
+import streamlit.components.v1 as components
+
+from components.summary_cards import render_summary_cards
+from components.protein_3d import render_protein_3d, _aligned_residue_set
+from components.api_client import API_BASE_URL
+
+try:
+    from video_generator import ProteinVideoData, generate_video
+    _VIDEO_AVAILABLE = True
+except ImportError:
+    _VIDEO_AVAILABLE = False
+
+
+def render_results(data: dict) -> None:
+    """Render the full tabbed results section for a screening result.
+
+    Parameters
+    ----------
+    data : dict
+        The screening result dict (from the API ``/api/screen`` response).
+    """
+    st.divider()
+
+    # Tabbed detail area
+    has_structure = data.get("pdb_string") is not None
+    tab_labels = ["Overview", "Matches", "Structure", "Score Breakdown", "Function", "Explain"]
+    tabs = st.tabs(tab_labels)
+
+    # ── Tab 0: Overview ──────────────────────────────────────────────────
+    with tabs[0]:
+        render_summary_cards(data)
+
+    # ── Tab 1: Matches ───────────────────────────────────────────────────
+    with tabs[1]:
+        if data.get("top_matches"):
+            matches_data = []
+            for i, match in enumerate(data["top_matches"], 1):
+                matches_data.append({
+                    "Rank": i,
+                    "Name": match["name"],
+                    "Organism": match["organism"],
+                    "Toxin Type": match["toxin_type"],
+                    "Embedding Sim": match["embedding_similarity"],
+                    "Structure Sim": match.get("structure_similarity") if has_structure else None,
+                })
+            df = pd.DataFrame(matches_data)
+
+            col_config = {
+                "Rank": st.column_config.NumberColumn(width="small"),
+                "Name": st.column_config.TextColumn(width="medium"),
+                "Organism": st.column_config.TextColumn(width="medium"),
+                "Toxin Type": st.column_config.TextColumn(width="small"),
+                "Embedding Sim": st.column_config.ProgressColumn(
+                    "Embedding Sim", min_value=0, max_value=1, format="%.3f",
+                ),
+            }
+            if has_structure:
+                col_config["Structure Sim"] = st.column_config.ProgressColumn(
+                    "Structure Sim", min_value=0, max_value=1, format="%.3f",
+                )
+            else:
+                df["Structure Sim"] = "\u2014"
+                col_config["Structure Sim"] = st.column_config.TextColumn("Structure Sim")
+
+            st.dataframe(df, column_config=col_config, use_container_width=True, hide_index=True)
+        else:
+            st.info("No significant matches found.")
+
+    # ── Tab 2: Structure ─────────────────────────────────────────────────
+    with tabs[2]:
+        pdb_string = data.get("pdb_string")
+        if pdb_string:
+            col_view, col_color = st.columns(2)
+            with col_view:
+                view_style = st.radio(
+                    "View", ["Cartoon", "Surface", "Stick"],
+                    horizontal=True, key="view_style",
+                )
+            with col_color:
+                color_options = ["Default", "pLDDT", "Risk Layers"]
+                color_mode = st.radio(
+                    "Color", color_options,
+                    horizontal=True, key="color_mode",
+                    help="Risk Layers: gray=no match, yellow=structurally aligned to toxin, orange=pocket, red=active site match",
+                )
+
+            pocket_res = data.get("pocket_residues", [])
+            danger_res = data.get("danger_residues", [])
+            aligned_regions = data.get("aligned_regions", [])
+
+            # Structural comparison toggle
+            overlay_pdb = None
+            overlay_name = ""
+            compare_data = st.session_state.get("compare_result")
+            top_matches = data.get("top_matches", [])
+
+            if top_matches:
+                top_match = top_matches[0]
+                match_name = top_match.get("name", "Unknown")
+                match_id = top_match.get("uniprot_id", "")
+
+                show_compare = st.toggle(
+                    f"Compare with: {match_name} ({match_id})",
+                    key="show_compare",
+                    help="Overlay the matched toxin structure (fetched from AlphaFold DB) for visual comparison",
+                )
+
+                if show_compare:
+                    # Fetch and align if not already cached for this toxin
+                    cached_id = st.session_state.get("compare_target_id")
+                    if compare_data and cached_id == match_id:
+                        overlay_pdb = compare_data.get("target_pdb")
+                        overlay_name = compare_data.get("target_name", match_name)
+                    else:
+                        with st.spinner(f"Fetching and aligning {match_name} from AlphaFold DB..."):
+                            try:
+                                resp = requests.post(
+                                    f"{API_BASE_URL}/compare",
+                                    json={
+                                        "query_pdb": pdb_string,
+                                        "target_uniprot_id": match_id,
+                                    },
+                                    timeout=60,
+                                )
+                                if resp.status_code == 200:
+                                    compare_data = resp.json()
+                                    st.session_state.compare_result = compare_data
+                                    st.session_state.compare_target_id = match_id
+                                    overlay_pdb = compare_data.get("target_pdb")
+                                    overlay_name = compare_data.get("target_name", match_name)
+                                elif resp.status_code == 404:
+                                    st.warning(f"No AlphaFold structure available for {match_name} ({match_id}).")
+                                else:
+                                    st.warning(f"Comparison failed: {resp.text}")
+                            except requests.exceptions.RequestException as e:
+                                st.warning(f"Could not reach comparison API: {e}")
+
+            render_protein_3d(
+                pdb_string=pdb_string,
+                pocket_residues=pocket_res,
+                danger_residues=danger_res,
+                aligned_regions=aligned_regions,
+                view_style=view_style,
+                color_mode=color_mode,
+                overlay_pdb=overlay_pdb,
+                overlay_name=overlay_name,
+                width=800,
+                height=500,
+            )
+
+            # Dynamic legend based on color mode
+            if color_mode == "Risk Layers":
+                aligned_res = _aligned_residue_set(aligned_regions)
+                legend_parts = ["Gray: no structural match"]
+                if aligned_res:
+                    legend_parts.append(f"Yellow: structurally aligned to toxin ({len(aligned_res)} residues)")
+                if pocket_res:
+                    legend_parts.append(f"Orange: active site pocket ({len(pocket_res)} residues)")
+                if danger_res:
+                    legend_parts.append(f"Red: active site match ({len(danger_res)} residues)")
+                st.caption(" | ".join(legend_parts))
+
+                # Framing: explain fold-level vs residue-level risk
+                if danger_res or aligned_res:
+                    import html as _html
+                    top_match = data.get("top_matches", [{}])[0] if data.get("top_matches") else {}
+                    match_name = _html.escape(top_match.get("name", "a known toxin"))
+                    st.markdown(f"""
+                    <div class="recommend-box" style="margin-top: 0.5rem;">
+                        <strong>Interpreting this view:</strong> The yellow regions show where this protein's
+                        backbone folds like <em>{match_name}</em>. Red highlights mark residues whose
+                        geometry matches the toxin's functional site. Danger is a property of the
+                        <strong>overall fold</strong> positioning these residues — not the residues alone.
+                        Mutating red residues does not necessarily make the protein safe, because the
+                        surrounding scaffold exists to position them.
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                legend_parts = ["Blue: query protein"]
+                if overlay_pdb:
+                    legend_parts.append(f"Red (transparent): {overlay_name}")
+                if pocket_res:
+                    legend_parts.append(f"Orange: active site pocket ({len(pocket_res)} residues)")
+                if danger_res:
+                    legend_parts.append(f"Red (solid): danger residues ({len(danger_res)} residues)")
+                st.caption(" | ".join(legend_parts))
+
+            # Comparison stats panel
+            if overlay_pdb and compare_data:
+                st.markdown("---")
+                st.markdown("**Structural Comparison**")
+
+                col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+                rmsd = compare_data.get("rmsd", 0)
+                aligned_res = compare_data.get("aligned_residues", 0)
+
+                # Get sequence identity and TM-score from the top match
+                seq_identity = top_match.get("sequence_identity")
+                tm_score = top_match.get("structure_similarity")
+
+                col_s1.metric("RMSD", f"{rmsd:.1f} A")
+                col_s2.metric("TM-score", f"{tm_score:.2f}" if tm_score is not None else "N/A")
+                col_s3.metric("Seq. Identity", f"{seq_identity:.0%}" if seq_identity is not None else "N/A")
+                col_s4.metric("Aligned Residues", str(aligned_res))
+
+                # Interpretive callout
+                if seq_identity is not None and tm_score is not None:
+                    if seq_identity < 0.3 and tm_score > 0.5:
+                        st.warning(
+                            f"Low sequence identity ({seq_identity:.0%}) with high structural similarity "
+                            f"(TM-score {tm_score:.2f}) — this pattern is characteristic of AI-designed "
+                            f"structural mimicry that BLAST-based screening would miss."
+                        )
+                    elif tm_score > 0.7:
+                        st.info(
+                            f"High structural similarity (TM-score {tm_score:.2f}) to {overlay_name}. "
+                            f"The overlay shows where the two structures align."
+                        )
+        else:
+            st.info("Structure prediction did not return a result. Try again or check the ESMFold API.")
+
+    # ── Tab 3: Score Breakdown ───────────────────────────────────────────
+    with tabs[3]:
+        factors = data.get("risk_factors", {})
+        emb_sim = factors.get("max_embedding_similarity", 0)
+        struct_sim = factors.get("max_structure_similarity")
+        func_overlap = factors.get("function_overlap", 0)
+        if struct_sim is not None:
+            weight_set = {"Embedding": 0.50, "Structure": 0.30, "Function": 0.20}
+            weight_note = "Weights: embedding 0.50, structure 0.30, function 0.20"
+        else:
+            weight_set = {"Embedding": 0.65, "Function": 0.35}
+            weight_note = "Weights: embedding 0.65, function 0.35 (no structure data available)"
+
+        st.markdown(f"**Weight set:** {weight_note}")
+
+        components_list = [
+            ("Embedding Similarity", emb_sim, weight_set.get("Embedding", 0)),
+        ]
+        if struct_sim is not None:
+            components_list.append(
+                ("Structure Similarity", struct_sim if struct_sim is not None else 0, weight_set.get("Structure", 0)),
+            )
+        components_list.append(
+            ("Function Overlap", func_overlap, weight_set.get("Function", 0)),
+        )
+
+        for label, raw_val, weight in components_list:
+            pct = int(raw_val * 100)
+            weighted = raw_val * weight
+            st.markdown(f"""
+            <div class="score-bar-row">
+                <span class="score-bar-label">{label}</span>
+                <div class="score-bar-track">
+                    <div class="score-bar-value" style="width:{pct}%;"></div>
+                </div>
+                <span class="score-bar-num">{raw_val:.3f}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.caption(f"Weight: {weight:.2f} | Contribution: {weighted:.3f}")
+
+        risk_score = data["risk_score"]
+        total_weighted = sum(raw * w for _, raw, w in components_list)
+        bonus = max(0, risk_score - min(1.0, total_weighted))
+        if bonus > 0.01:
+            st.markdown(f"""
+            <div class="score-bar-row">
+                <span class="score-bar-label">Synergy Bonus</span>
+                <div class="score-bar-track">
+                    <div class="score-bar-value" style="width:{int(bonus*100)}%; background:#a78bfa;"></div>
+                </div>
+                <span class="score-bar-num">+{bonus:.3f}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.caption("Bonus for multiple high-confidence signals")
+
+        st.markdown(f"**Final Score: {risk_score:.3f}**")
+
+    # ── Tab 4: Function ──────────────────────────────────────────────────
+    with tabs[4]:
+        function_pred = data.get("function_prediction")
+        if function_pred:
+            summary = function_pred.get("summary", "")
+            if summary:
+                st.markdown(f'<div class="recommend-box">{summary}</div>', unsafe_allow_html=True)
+
+            go_terms = function_pred.get("go_terms", [])
+            if go_terms:
+                st.markdown("**GO Terms**")
+                for term in go_terms:
+                    term_id = term.get("term", "Unknown")
+                    name = term.get("name", "")
+                    conf = term.get("confidence", "0")
+                    conf_float = float(conf) if conf else 0
+                    conf_pct = int(conf_float * 100)
+                    st.markdown(f"""
+                    <div class="func-card">
+                        <span class="func-card-id">{term_id}</span>
+                        <span class="func-card-name" style="margin-left:8px;">{name}</span>
+                        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                            <div class="conf-bar-bg" style="flex:1;">
+                                <div class="conf-bar-fill" style="width:{conf_pct}%;"></div>
+                            </div>
+                            <span style="font-size:0.75rem; color:#64748b;">{conf_float:.2f}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            ec_numbers = function_pred.get("ec_numbers", [])
+            if ec_numbers:
+                st.markdown("**EC Numbers**")
+                for ec in ec_numbers:
+                    number = ec.get("number", "Unknown")
+                    conf = ec.get("confidence", "0")
+                    conf_float = float(conf) if conf else 0
+                    conf_pct = int(conf_float * 100)
+                    st.markdown(f"""
+                    <div class="func-card">
+                        <span class="func-card-id">{number}</span>
+                        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                            <div class="conf-bar-bg" style="flex:1;">
+                                <div class="conf-bar-fill" style="width:{conf_pct}%;"></div>
+                            </div>
+                            <span style="font-size:0.75rem; color:#64748b;">{conf_float:.2f}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            if not go_terms and not ec_numbers:
+                st.info("No GO terms or EC numbers predicted.")
+        else:
+            st.info("No function prediction available.")
+
+    # ── Tab 5: Explain ───────────────────────────────────────────────────
+    with tabs[5]:
+        risk_score = data["risk_score"]
+        risk_level = data["risk_level"]
+        factors = data.get("risk_factors", {})
+        explanation = factors.get("score_explanation", "")
+
+        if risk_score >= 0.75:
+            verdict_class = "verdict-high"
+        elif risk_score >= 0.45:
+            verdict_class = "verdict-medium"
+        else:
+            verdict_class = "verdict-low"
+
+        parts = [p.strip() for p in explanation.split(". ") if p.strip()]
+        verdict_text = parts[0] if parts else f"{risk_level} RISK"
+
+        st.markdown(f'<div class="verdict-box {verdict_class}">{verdict_text}</div>', unsafe_allow_html=True)
+
+        if len(parts) > 1:
+            for part in parts[1:]:
+                if part.startswith("Factors:"):
+                    factor_text = part[len("Factors:"):].strip()
+                    factor_items = [f.strip() for f in factor_text.split(";") if f.strip()]
+                    for item in factor_items:
+                        st.markdown(f"- {item}")
+                elif part.startswith("Recommend"):
+                    st.markdown(f'<div class="recommend-box">{part}.</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f"- {part}")
+
+        anomaly_score = factors.get("session_anomaly_score", 0.0)
+        query_count = st.session_state.get("query_count", 0)
+        if anomaly_score > 0 or query_count > 1:
+            st.markdown("---")
+            st.markdown("**Session Monitoring**")
+            if anomaly_score > 0.5:
+                st.warning(f"Session anomaly score: {anomaly_score:.2f} — convergent optimization pattern detected across {query_count} queries.")
+            elif anomaly_score > 0.3:
+                st.info(f"Session anomaly score: {anomaly_score:.2f} — elevated activity across {query_count} queries.")
+            else:
+                st.caption(f"Session anomaly score: {anomaly_score:.2f} (normal) | {query_count} queries this session")
+
+        warnings = data.get("warnings", [])
+        if warnings:
+            st.markdown("---")
+            st.markdown("**Warnings**")
+            for w in warnings:
+                st.warning(w)
+
+    # Copy JSON button
+    col_spacer, col_json = st.columns([5, 1])
+    with col_json:
+        if st.button("Copy JSON", key="copy_json"):
+            st.code(json.dumps(data, indent=2), language="json")
+
+    # Video generation
+    if _VIDEO_AVAILABLE and data.get("pdb_string"):
+        st.markdown("---")
+        st.markdown(
+            '<div style="text-align:center; margin: 1rem 0 0.5rem 0;">'
+            '<span style="color:#94a3b8; font-size:0.85rem;">'
+            'Generate an MP4 video showing the 3D structure rotating with risk annotations and stats overlay'
+            '</span></div>',
+            unsafe_allow_html=True,
+        )
+        col_l, col_btn, col_r = st.columns([1, 2, 1])
+        with col_btn:
+            generate_clicked = st.button(
+                "Generate Video Analysis",
+                key="gen_video",
+                use_container_width=True,
+                type="primary",
+            )
+        if generate_clicked:
+            video_input = ProteinVideoData(
+                pdb_string=data["pdb_string"],
+                risk_score=data["risk_score"],
+                risk_level=data["risk_level"],
+                sequence_length=data.get("sequence_length", 0),
+                top_matches=data.get("top_matches", []),
+                pocket_residues=data.get("pocket_residues", []),
+                danger_residues=data.get("danger_residues", []),
+                risk_factors=data.get("risk_factors", {}),
+                structure_predicted=data.get("structure_predicted", False),
+                function_prediction=data.get("function_prediction"),
+            )
+            with st.spinner("Rendering video... this may take 30-90 seconds"):
+                try:
+                    video_bytes = generate_video(video_input)
+                    st.video(video_bytes, format="video/mp4")
+                    st.download_button(
+                        label="Download Video",
+                        data=video_bytes,
+                        file_name="bioscreen_analysis.mp4",
+                        mime="video/mp4",
+                        use_container_width=True,
+                    )
+                except Exception as e:
+                    st.error(f"Video generation failed: {e}")
