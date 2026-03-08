@@ -438,7 +438,7 @@ def main():
             "Screen Sequence",
             type="primary",
             disabled=not sequence_input.strip(),
-            use_container_width=True,
+            width="stretch",
         )
 
     # Validation feedback
@@ -517,7 +517,7 @@ def main():
                     df["Structure Sim"] = "\u2014"
                     col_config["Structure Sim"] = st.column_config.TextColumn("Structure Sim")
 
-                st.dataframe(df, column_config=col_config, use_container_width=True, hide_index=True)
+                st.dataframe(df, column_config=col_config, width="stretch", hide_index=True)
             else:
                 st.info("No significant matches found.")
 
