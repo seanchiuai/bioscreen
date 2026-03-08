@@ -14,6 +14,8 @@ from app.config import get_settings
 from app.models.schemas import (
     BatchScreeningRequest,
     BatchScreeningResult,
+    CompareRequest,
+    CompareResponse,
     HealthResponse,
     RiskLevel,
     ScreeningRequest,
@@ -164,16 +166,15 @@ async def screen_sequence(
         logger.info(f"Generating embedding for sequence {sequence_id}")
         query_embedding = embedding_model.embed(request_data.sequence)
 
-        # Predict structure if requested
+        # Always predict structure
         pdb_string = None
         structure_predicted = False
-        if request_data.run_structure:
-            logger.info(f"Predicting structure for sequence {sequence_id}")
-            try:
-                pdb_string = await predict_structure(request_data.sequence)
-                structure_predicted = True
-            except Exception as e:
-                logger.warning(f"Structure prediction failed: {e}")
+        logger.info(f"Predicting structure for sequence {sequence_id}")
+        try:
+            pdb_string = await predict_structure(request_data.sequence)
+            structure_predicted = True
+        except Exception as e:
+            logger.warning(f"Structure prediction failed: {e}")
 
         # Similarity search
         logger.info(f"Running similarity search for sequence {sequence_id}")
@@ -182,7 +183,6 @@ async def screen_sequence(
             query_embedding=query_embedding,
             pdb_string=pdb_string,
             top_k=request_data.top_k,
-            run_structure=request_data.run_structure,
         )
 
         # Function prediction
@@ -194,12 +194,14 @@ async def screen_sequence(
         for hit in similarity_result.embedding_hits:
             meta = hit.metadata
 
-            # Get structure similarity for this hit if available
+            # Get structure similarity and sequence identity for this hit if available
             struct_sim = None
+            seq_identity = None
             uniprot_id = meta.get("uniprot_id", "")
             for struct_hit in similarity_result.structure_hits:
                 if struct_hit.target_id == uniprot_id:
                     struct_sim = struct_hit.tm_score
+                    seq_identity = struct_hit.fident if struct_hit.fident > 0 else None
                     break
 
             top_matches.append(
@@ -210,6 +212,7 @@ async def screen_sequence(
                     toxin_type=meta.get("toxin_type", ""),
                     embedding_similarity=hit.cosine_similarity,
                     structure_similarity=struct_sim,
+                    sequence_identity=seq_identity,
                     go_terms=meta.get("go_terms", []),
                     ec_numbers=meta.get("ec_numbers", []),
                 )
@@ -217,7 +220,7 @@ async def screen_sequence(
 
         # Compute risk score
         max_embedding_sim = similarity_result.max_embedding_sim
-        max_structure_sim = similarity_result.max_structure_sim if request_data.run_structure else None
+        max_structure_sim = similarity_result.max_structure_sim
 
         # Active site score: combine Foldseek lDDT (local geometry) with
         # pocket-based RMSD comparison when structure is available
@@ -226,7 +229,7 @@ async def screen_sequence(
         danger_residues: list[int] = []
         aligned_regions: list[list[int]] = []
 
-        if request_data.run_structure and similarity_result.structure_hits:
+        if similarity_result.structure_hits:
             # Foldseek lDDT captures local structural conservation
             max_lddt = max(h.lddt for h in similarity_result.structure_hits)
             active_site_score = max_lddt  # lDDT is already 0-1
@@ -319,8 +322,6 @@ async def screen_sequence(
 
         # Warnings
         warnings = []
-        if not request_data.run_structure and max_embedding_sim > 0.8:
-            warnings.append("High sequence similarity detected. Consider running structure analysis.")
         if len(request_data.sequence) > 1000:
             warnings.append("Long sequence may have truncated embeddings.")
 
@@ -359,10 +360,6 @@ async def batch_screen_sequences(
     low_risk_count = 0
 
     for seq_request in request_data.sequences:
-        # Apply batch-level structure setting if not specified per sequence
-        if not hasattr(seq_request, 'run_structure'):
-            seq_request.run_structure = request_data.run_structure
-
         try:
             result = await screen_sequence(seq_request, app_request)
             results.append(result)
@@ -397,6 +394,84 @@ async def batch_screen_sequences(
         high_risk_count=high_risk_count,
         medium_risk_count=medium_risk_count,
         low_risk_count=low_risk_count,
+    )
+
+
+# ── AlphaFold PDB cache ───────────────────────────────────────────────────────
+_alphafold_pdb_cache: dict[str, str] = {}
+
+ALPHAFOLD_DB_URL = "https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v4.pdb"
+
+
+@router.post("/compare", response_model=CompareResponse)
+async def compare_structures(
+    request_data: CompareRequest,
+    app_request: Request,
+) -> CompareResponse:
+    """Compare a query protein structure with a toxin reference via superposition.
+
+    Fetches the toxin's PDB from AlphaFold DB, aligns it to the query structure
+    using Kabsch alignment, and returns both PDB strings for overlay rendering.
+    """
+    import httpx
+    from app.pipeline.active_site import superimpose_structures
+
+    uniprot_id = request_data.target_uniprot_id.strip().upper()
+
+    # Look up toxin metadata from the database
+    toxin_db = getattr(app_request.app.state, "toxin_db", None)
+    target_name = ""
+    target_organism = ""
+    if toxin_db:
+        for i in range(toxin_db.size):
+            meta = toxin_db.get_metadata(i)
+            if meta.get("uniprot_id") == uniprot_id:
+                target_name = meta.get("name", "")
+                target_organism = meta.get("organism", "")
+                break
+
+    # Fetch target PDB from AlphaFold DB (with in-memory cache)
+    if uniprot_id in _alphafold_pdb_cache:
+        target_pdb = _alphafold_pdb_cache[uniprot_id]
+    else:
+        url = ALPHAFOLD_DB_URL.format(uniprot_id=uniprot_id)
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.get(url)
+            if resp.status_code == 404:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No AlphaFold structure found for {uniprot_id}",
+                )
+            resp.raise_for_status()
+            target_pdb = resp.text
+            _alphafold_pdb_cache[uniprot_id] = target_pdb
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(
+                status_code=502,
+                detail=f"AlphaFold DB returned error: {e.response.status_code}",
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Could not reach AlphaFold DB: {e}",
+            )
+
+    # Superimpose target onto query
+    result = superimpose_structures(request_data.query_pdb, target_pdb)
+    if result is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Failed to align structures. One or both PDB inputs may be invalid.",
+        )
+
+    return CompareResponse(
+        query_pdb=result.query_pdb,
+        target_pdb=result.aligned_target_pdb,
+        target_name=target_name,
+        target_organism=target_organism,
+        rmsd=result.rmsd,
+        aligned_residues=result.aligned_residues,
     )
 
 

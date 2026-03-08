@@ -40,6 +40,7 @@ class StructureHit:
     target_id: str
     tm_score: float          # TM-score (query-normalised)
     lddt: float = 0.0
+    fident: float = 0.0      # fraction sequence identity
     aligned_length: int = 0
     query_coverage: float = 0.0
     qstart: int = 0          # 0-indexed start of aligned region in query
@@ -139,7 +140,7 @@ class FoldseekSearcher:
         qstart, qend, tstart, tend, evalue, bits
 
         When ``--format-output`` includes ``lddt`` and ``qtmscore``, columns shift.
-        We request: query,target,qtmscore,lddt,alnlen,qcov,qstart,qend
+        We request: query,target,qtmscore,lddt,fident,alnlen,qcov,qstart,qend
         """
         hits: list[StructureHit] = []
         for line in m8_text.strip().splitlines():
@@ -152,15 +153,17 @@ class FoldseekSearcher:
                 target_id = parts[1].split(".")[0]  # strip PDB chain suffix
                 tm_score = float(parts[2])
                 lddt = float(parts[3]) if len(parts) > 3 else 0.0
-                aln_len = int(parts[4]) if len(parts) > 4 else 0
-                qcov = float(parts[5]) if len(parts) > 5 else 0.0
-                qstart = int(parts[6]) if len(parts) > 6 else 0
-                qend = int(parts[7]) if len(parts) > 7 else 0
+                fident = float(parts[4]) if len(parts) > 4 else 0.0
+                aln_len = int(parts[5]) if len(parts) > 5 else 0
+                qcov = float(parts[6]) if len(parts) > 6 else 0.0
+                qstart = int(parts[7]) if len(parts) > 7 else 0
+                qend = int(parts[8]) if len(parts) > 8 else 0
                 hits.append(
                     StructureHit(
                         target_id=target_id,
                         tm_score=tm_score,
                         lddt=lddt,
+                        fident=fident,
                         aligned_length=aln_len,
                         query_coverage=qcov,
                         qstart=qstart,
@@ -210,7 +213,7 @@ class FoldseekSearcher:
                 str(self._settings.foldseek_db_path),
                 str(result_file),
                 str(tmp_foldseek),
-                "--format-output", "query,target,qtmscore,lddt,alnlen,qcov,qstart,qend",
+                "--format-output", "query,target,qtmscore,lddt,fident,alnlen,qcov,qstart,qend",
                 "-s", str(sensitivity),
                 "--max-seqs", str(top_k * 2),
                 "--threads", "4",
@@ -260,33 +263,31 @@ class CombinedSimilaritySearcher:
         query_embedding: EmbeddingArray,
         pdb_string: str | None = None,
         top_k: int = 10,
-        run_structure: bool = False,
     ) -> SimilarityResult:
         """Run similarity search on the query sequence representation.
 
-        Always runs embedding search (fast path).  Optionally runs Foldseek
-        when *run_structure* is True and a *pdb_string* is provided.
+        Always runs embedding search.  Also runs Foldseek structure search
+        when a *pdb_string* is provided.
 
         Args:
             query_embedding: Mean-pooled ESM-2 embedding of the query.
             pdb_string: ESMFold-predicted PDB string (required for structure search).
             top_k: Number of hits per modality.
-            run_structure: Whether to run Foldseek structure comparison.
 
         Returns:
             :class:`SimilarityResult` with combined hits.
         """
         result = SimilarityResult()
 
-        # Fast path: embedding search
+        # Embedding search
         emb_hits = self._embedding_searcher.search(query_embedding, top_k=top_k)
         result.embedding_hits = emb_hits
         result.max_embedding_sim = max(
             (h.cosine_similarity for h in emb_hits), default=0.0
         )
 
-        # Full path: structure search
-        if run_structure and pdb_string:
+        # Structure search
+        if pdb_string:
             struct_hits = await self._foldseek_searcher.search(pdb_string, top_k=top_k)
             result.structure_hits = struct_hits
             result.max_structure_sim = max(

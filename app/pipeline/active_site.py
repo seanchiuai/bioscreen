@@ -282,6 +282,133 @@ def compute_active_site_score(
     return all_matches[:top_k]
 
 
+# ── Structural superposition ─────────────────────────────────────────────────
+
+
+@dataclass
+class SuperpositionResult:
+    """Result of superimposing two full protein structures."""
+
+    query_pdb: str  # unchanged query PDB string
+    aligned_target_pdb: str  # target PDB with coordinates aligned to query frame
+    rmsd: float  # C-alpha RMSD after alignment
+    aligned_residues: int  # number of C-alpha pairs used
+
+
+def superimpose_structures(
+    query_pdb: str,
+    target_pdb: str,
+) -> SuperpositionResult | None:
+    """Superimpose a target structure onto a query structure using Kabsch alignment.
+
+    Aligns the target's C-alpha atoms to the query's, then applies the same
+    rotation + translation to all atoms in the target structure. Returns a new
+    PDB string for the target with transformed coordinates.
+
+    Args:
+        query_pdb: PDB format string for the query (reference) protein.
+        target_pdb: PDB format string for the target (toxin) protein.
+
+    Returns:
+        SuperpositionResult, or None if alignment fails.
+    """
+    query_struct = _parse_pdb_string(query_pdb)
+    target_struct = _parse_pdb_string(target_pdb)
+    if query_struct is None or target_struct is None:
+        logger.warning("Failed to parse one or both PDB strings for superposition")
+        return None
+
+    # Extract C-alpha coordinates from first model of each structure
+    q_ca = []
+    for model in query_struct:
+        for chain in model:
+            for residue in chain:
+                if residue.id[0] != " ":
+                    continue
+                if "CA" in residue:
+                    q_ca.append(residue["CA"].get_vector().get_array())
+        break
+
+    t_ca = []
+    for model in target_struct:
+        for chain in model:
+            for residue in chain:
+                if residue.id[0] != " ":
+                    continue
+                if "CA" in residue:
+                    t_ca.append(residue["CA"].get_vector().get_array())
+        break
+
+    if len(q_ca) < 3 or len(t_ca) < 3:
+        logger.warning("Too few C-alpha atoms for superposition (query={}, target={})", len(q_ca), len(t_ca))
+        return None
+
+    # Use the shorter length for alignment
+    n = min(len(q_ca), len(t_ca))
+    q_coords = np.array(q_ca[:n]).copy()
+    t_coords = np.array(t_ca[:n]).copy()
+
+    # Center both
+    q_center = q_coords.mean(axis=0)
+    t_center = t_coords.mean(axis=0)
+    q_centered = q_coords - q_center
+    t_centered = t_coords - t_center
+
+    # Kabsch algorithm: find optimal rotation via SVD
+    H = t_centered.T @ q_centered
+    U, S, Vt = np.linalg.svd(H)
+
+    # Correct for reflection
+    d = np.linalg.det(Vt.T @ U.T)
+    sign_matrix = np.eye(3)
+    sign_matrix[2, 2] = np.sign(d)
+
+    R = Vt.T @ sign_matrix @ U.T
+
+    # Compute RMSD
+    t_rotated = (R @ t_centered.T).T
+    rmsd = float(np.sqrt(((t_rotated - q_centered) ** 2).sum(axis=1).mean()))
+
+    # Apply rotation + translation to ALL atoms in the target structure
+    for model in target_struct:
+        for chain in model:
+            for residue in chain:
+                for atom in residue:
+                    coord = atom.get_vector().get_array()
+                    # Translate to origin, rotate, translate to query frame
+                    new_coord = R @ (coord - t_center) + q_center
+                    atom.set_coord(new_coord)
+
+    # Write aligned target structure to PDB string
+    aligned_pdb = _structure_to_pdb_string(target_struct)
+    if aligned_pdb is None:
+        return None
+
+    return SuperpositionResult(
+        query_pdb=query_pdb,
+        aligned_target_pdb=aligned_pdb,
+        rmsd=rmsd,
+        aligned_residues=n,
+    )
+
+
+def _structure_to_pdb_string(structure) -> str | None:
+    """Write a BioPython Structure object to a PDB format string."""
+    try:
+        from Bio.PDB import PDBIO
+        pdb_io = PDBIO()
+        pdb_io.set_structure(structure)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".pdb", delete=False) as f:
+            pdb_io.save(f.name)
+            tmp_path = Path(f.name)
+        pdb_string = tmp_path.read_text()
+        tmp_path.unlink(missing_ok=True)
+        return pdb_string
+    except Exception as e:
+        logger.warning("Failed to write PDB string: {}", e)
+        return None
+
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 

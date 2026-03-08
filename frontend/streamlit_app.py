@@ -49,14 +49,12 @@ def screen_sequence(
     sequence: str,
     session_id: str,
     sequence_id: Optional[str] = None,
-    run_structure: bool = False,
     top_k: int = 5
 ) -> dict:
     """Submit a sequence for screening via the API."""
     payload = {
         "sequence": sequence,
         "sequence_id": sequence_id,
-        "run_structure": run_structure,
         "top_k": top_k
     }
 
@@ -96,6 +94,8 @@ def render_protein_3d(
     aligned_regions: list[list[int]] | None = None,
     view_style: str = "Cartoon",
     color_mode: str = "Default",
+    overlay_pdb: str | None = None,
+    overlay_name: str = "",
     width: int = 600,
     height: int = 480,
 ) -> None:
@@ -108,6 +108,8 @@ def render_protein_3d(
         aligned_regions: Regions structurally aligned to toxin, as [start, end] pairs.
         view_style: One of "Cartoon", "Surface", "Stick".
         color_mode: "Default", "pLDDT", or "Risk Layers".
+        overlay_pdb: Optional aligned toxin PDB string for superposition overlay.
+        overlay_name: Name of the overlaid toxin (for display).
         width: Viewer width in pixels.
         height: Viewer height in pixels.
     """
@@ -117,43 +119,43 @@ def render_protein_3d(
     if color_mode == "Risk Layers":
         # Layer 1 (global): gray base, yellow for structurally aligned regions
         if view_style == "Cartoon":
-            view.setStyle({"cartoon": {"color": "#b0b0b0"}})
+            view.setStyle({"model": 0}, {"cartoon": {"color": "#b0b0b0"}})
         elif view_style == "Surface":
-            view.setStyle({"cartoon": {"color": "#b0b0b0", "opacity": 0.5}})
-            view.addSurface(py3Dmol.VDW, {"opacity": 0.5, "color": "#b0b0b0"})
+            view.setStyle({"model": 0}, {"cartoon": {"color": "#b0b0b0", "opacity": 0.5}})
+            view.addSurface(py3Dmol.VDW, {"opacity": 0.5, "color": "#b0b0b0"}, {"model": 0})
         elif view_style == "Stick":
-            view.setStyle({"stick": {"color": "#b0b0b0"}})
+            view.setStyle({"model": 0}, {"stick": {"color": "#b0b0b0"}})
 
         # Highlight aligned backbone regions in yellow
         aligned_res = _aligned_residue_set(aligned_regions or [])
         if aligned_res:
             if view_style == "Cartoon":
-                view.addStyle({"resi": aligned_res}, {"cartoon": {"color": "#fbbf24"}})
+                view.addStyle({"model": 0, "resi": aligned_res}, {"cartoon": {"color": "#fbbf24"}})
             elif view_style == "Surface":
-                view.addStyle({"resi": aligned_res}, {"cartoon": {"color": "#fbbf24", "opacity": 0.5}})
-                view.addSurface(py3Dmol.VDW, {"opacity": 0.5, "color": "#fbbf24"}, {"resi": aligned_res})
+                view.addStyle({"model": 0, "resi": aligned_res}, {"cartoon": {"color": "#fbbf24", "opacity": 0.5}})
+                view.addSurface(py3Dmol.VDW, {"opacity": 0.5, "color": "#fbbf24"}, {"model": 0, "resi": aligned_res})
             elif view_style == "Stick":
-                view.addStyle({"resi": aligned_res}, {"stick": {"color": "#fbbf24"}})
+                view.addStyle({"model": 0, "resi": aligned_res}, {"stick": {"color": "#fbbf24"}})
 
         # Layer 2 (local): pocket residues in orange, danger residues in red
         if pocket_residues:
             view.addStyle(
-                {"resi": pocket_residues},
+                {"model": 0, "resi": pocket_residues},
                 {"stick": {"color": "orange", "radius": 0.2}},
             )
         if danger_residues:
             view.addStyle(
-                {"resi": danger_residues},
+                {"model": 0, "resi": danger_residues},
                 {"stick": {"color": "red", "radius": 0.3}},
             )
             view.addSurface(
                 py3Dmol.VDW,
                 {"opacity": 0.3, "color": "red"},
-                {"resi": danger_residues},
+                {"model": 0, "resi": danger_residues},
             )
     else:
         # Original color modes (Default / pLDDT)
-        if color_mode == "pLDDT":
+        if color_mode == "pLDDT" and not overlay_pdb:
             color_spec = {
                 "prop": "b",
                 "gradient": "roygb",
@@ -163,48 +165,64 @@ def render_protein_3d(
         else:
             color_spec = "lightblue"
 
+        # Style the query protein (model 0)
         if view_style == "Cartoon":
-            if color_mode == "pLDDT":
-                view.setStyle({"cartoon": {"colorscheme": color_spec}})
+            if isinstance(color_spec, dict):
+                view.setStyle({"model": 0}, {"cartoon": {"colorscheme": color_spec}})
             else:
-                view.setStyle({"cartoon": {"color": color_spec}})
+                view.setStyle({"model": 0}, {"cartoon": {"color": color_spec}})
         elif view_style == "Surface":
-            if color_mode == "pLDDT":
-                view.setStyle({"cartoon": {"colorscheme": color_spec, "opacity": 0.5}})
+            if isinstance(color_spec, dict):
+                view.setStyle({"model": 0}, {"cartoon": {"colorscheme": color_spec, "opacity": 0.5}})
                 view.addSurface(
                     py3Dmol.VDW,
                     {"opacity": 0.7, "colorscheme": color_spec},
+                    {"model": 0},
                 )
             else:
-                view.setStyle({"cartoon": {"color": color_spec, "opacity": 0.5}})
+                view.setStyle({"model": 0}, {"cartoon": {"color": color_spec, "opacity": 0.5}})
                 view.addSurface(
                     py3Dmol.VDW,
                     {"opacity": 0.7, "color": color_spec},
+                    {"model": 0},
                 )
         elif view_style == "Stick":
-            if color_mode == "pLDDT":
-                view.setStyle({"stick": {"colorscheme": color_spec}})
+            if isinstance(color_spec, dict):
+                view.setStyle({"model": 0}, {"stick": {"colorscheme": color_spec}})
             else:
-                view.setStyle({"stick": {"color": color_spec}})
+                view.setStyle({"model": 0}, {"stick": {"color": color_spec}})
 
         # Highlight pocket residues in orange (stick representation)
         if pocket_residues:
             view.addStyle(
-                {"resi": pocket_residues},
+                {"model": 0, "resi": pocket_residues},
                 {"stick": {"color": "orange", "radius": 0.2}},
             )
 
         # Highlight danger residues in red (thick stick + transparent surface)
         if danger_residues:
             view.addStyle(
-                {"resi": danger_residues},
+                {"model": 0, "resi": danger_residues},
                 {"stick": {"color": "red", "radius": 0.3}},
             )
             view.addSurface(
                 py3Dmol.VDW,
                 {"opacity": 0.3, "color": "red"},
-                {"resi": danger_residues},
+                {"model": 0, "resi": danger_residues},
             )
+
+    # Overlay toxin structure (model 1) — semi-transparent red
+    if overlay_pdb:
+        view.addModel(overlay_pdb, "pdb")
+        view.setStyle(
+            {"model": 1},
+            {"cartoon": {"color": "#e74c3c", "opacity": 0.5}},
+        )
+        view.addSurface(
+            py3Dmol.VDW,
+            {"opacity": 0.2, "color": "#e74c3c"},
+            {"model": 1},
+        )
 
     view.zoomTo()
     view.spin(False)
@@ -370,9 +388,8 @@ def render_summary_cards(data: dict) -> None:
     best_sim = max(emb_sim, str_sim or 0)
     sim_label = "structure" if (str_sim and str_sim >= emb_sim) else "embedding"
 
-    structure_ran = data.get("structure_predicted", False)
-    mode_label = "Full" if structure_ran else "Fast"
-    mode_detail = "Embedding + Structure + Function" if structure_ran else "Embedding + Function"
+    mode_label = "Full"
+    mode_detail = "Embedding + Structure + Function"
 
     pct = int(risk_score * 100)
 
@@ -477,15 +494,7 @@ def main():
         if DEMO_SEQUENCES.get(demo_choice):
             st.session_state.example_sequence = DEMO_SEQUENCES[demo_choice]
 
-        c1, c2 = st.columns(2)
-        with c1:
-            run_structure = st.toggle(
-                "Structure analysis",
-                value=False,
-                help="Include ESMFold + Foldseek (slower, more accurate)",
-            )
-        with c2:
-            top_k = st.number_input("Top K", min_value=1, max_value=20, value=5, label_visibility="collapsed")
+        top_k = st.number_input("Top K", min_value=1, max_value=20, value=5, label_visibility="collapsed")
 
         screen_button = st.button(
             "Screen Sequence",
@@ -514,7 +523,6 @@ def main():
                 sequence=sequence_input,
                 session_id=st.session_state.session_id,
                 sequence_id=sequence_id if sequence_id.strip() else None,
-                run_structure=run_structure,
                 top_k=top_k,
             )
 
@@ -597,6 +605,53 @@ def main():
                 danger_res = data.get("danger_residues", [])
                 aligned_regions = data.get("aligned_regions", [])
 
+                # Structural comparison toggle
+                overlay_pdb = None
+                overlay_name = ""
+                compare_data = st.session_state.get("compare_result")
+                top_matches = data.get("top_matches", [])
+
+                if top_matches:
+                    top_match = top_matches[0]
+                    match_name = top_match.get("name", "Unknown")
+                    match_id = top_match.get("uniprot_id", "")
+
+                    show_compare = st.toggle(
+                        f"Compare with: {match_name} ({match_id})",
+                        key="show_compare",
+                        help="Overlay the matched toxin structure (fetched from AlphaFold DB) for visual comparison",
+                    )
+
+                    if show_compare:
+                        # Fetch and align if not already cached for this toxin
+                        cached_id = st.session_state.get("compare_target_id")
+                        if compare_data and cached_id == match_id:
+                            overlay_pdb = compare_data.get("target_pdb")
+                            overlay_name = compare_data.get("target_name", match_name)
+                        else:
+                            with st.spinner(f"Fetching and aligning {match_name} from AlphaFold DB..."):
+                                try:
+                                    resp = requests.post(
+                                        f"{API_BASE_URL}/compare",
+                                        json={
+                                            "query_pdb": pdb_string,
+                                            "target_uniprot_id": match_id,
+                                        },
+                                        timeout=60,
+                                    )
+                                    if resp.status_code == 200:
+                                        compare_data = resp.json()
+                                        st.session_state.compare_result = compare_data
+                                        st.session_state.compare_target_id = match_id
+                                        overlay_pdb = compare_data.get("target_pdb")
+                                        overlay_name = compare_data.get("target_name", match_name)
+                                    elif resp.status_code == 404:
+                                        st.warning(f"No AlphaFold structure available for {match_name} ({match_id}).")
+                                    else:
+                                        st.warning(f"Comparison failed: {resp.text}")
+                                except requests.exceptions.RequestException as e:
+                                    st.warning(f"Could not reach comparison API: {e}")
+
                 render_protein_3d(
                     pdb_string=pdb_string,
                     pocket_residues=pocket_res,
@@ -604,6 +659,8 @@ def main():
                     aligned_regions=aligned_regions,
                     view_style=view_style,
                     color_mode=color_mode,
+                    overlay_pdb=overlay_pdb,
+                    overlay_name=overlay_name,
                     width=800,
                     height=500,
                 )
@@ -636,35 +693,67 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                 else:
-                    legend_parts = ["Blue: normal structure"]
+                    legend_parts = ["Blue: query protein"]
+                    if overlay_pdb:
+                        legend_parts.append(f"Red (transparent): {overlay_name}")
                     if pocket_res:
                         legend_parts.append(f"Orange: active site pocket ({len(pocket_res)} residues)")
                     if danger_res:
-                        legend_parts.append(f"Red: danger residues ({len(danger_res)} residues)")
+                        legend_parts.append(f"Red (solid): danger residues ({len(danger_res)} residues)")
                     st.caption(" | ".join(legend_parts))
+
+                # Comparison stats panel
+                if overlay_pdb and compare_data:
+                    st.markdown("---")
+                    st.markdown("**Structural Comparison**")
+
+                    col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+                    rmsd = compare_data.get("rmsd", 0)
+                    aligned_res = compare_data.get("aligned_residues", 0)
+
+                    # Get sequence identity and TM-score from the top match
+                    seq_identity = top_match.get("sequence_identity")
+                    tm_score = top_match.get("structure_similarity")
+
+                    col_s1.metric("RMSD", f"{rmsd:.1f} A")
+                    col_s2.metric("TM-score", f"{tm_score:.2f}" if tm_score is not None else "N/A")
+                    col_s3.metric("Seq. Identity", f"{seq_identity:.0%}" if seq_identity is not None else "N/A")
+                    col_s4.metric("Aligned Residues", str(aligned_res))
+
+                    # Interpretive callout
+                    if seq_identity is not None and tm_score is not None:
+                        if seq_identity < 0.3 and tm_score > 0.5:
+                            st.warning(
+                                f"Low sequence identity ({seq_identity:.0%}) with high structural similarity "
+                                f"(TM-score {tm_score:.2f}) — this pattern is characteristic of AI-designed "
+                                f"structural mimicry that BLAST-based screening would miss."
+                            )
+                        elif tm_score > 0.7:
+                            st.info(
+                                f"High structural similarity (TM-score {tm_score:.2f}) to {overlay_name}. "
+                                f"The overlay shows where the two structures align."
+                            )
             else:
-                st.info("Structure analysis was not run. Enable 'Structure analysis' and re-screen to see the 3D viewer.")
+                st.info("Structure prediction did not return a result. Try again or check the ESMFold API.")
 
         with tabs[3]:
             factors = data.get("risk_factors", {})
             emb_sim = factors.get("max_embedding_similarity", 0)
             struct_sim = factors.get("max_structure_similarity")
             func_overlap = factors.get("function_overlap", 0)
-            structure_ran = data.get("structure_predicted", False)
-
-            if structure_ran and struct_sim is not None:
+            if struct_sim is not None:
                 weight_set = {"Embedding": 0.50, "Structure": 0.30, "Function": 0.20}
-                weight_note = "Full path weights (embedding 0.50, structure 0.30, function 0.20)"
+                weight_note = "Weights: embedding 0.50, structure 0.30, function 0.20"
             else:
                 weight_set = {"Embedding": 0.65, "Function": 0.35}
-                weight_note = "Fast path weights (embedding 0.65, function 0.35)"
+                weight_note = "Weights: embedding 0.65, function 0.35 (no structure data available)"
 
             st.markdown(f"**Weight set:** {weight_note}")
 
             components_list = [
                 ("Embedding Similarity", emb_sim, weight_set.get("Embedding", 0)),
             ]
-            if structure_ran:
+            if struct_sim is not None:
                 components_list.append(
                     ("Structure Similarity", struct_sim if struct_sim is not None else 0, weight_set.get("Structure", 0)),
                 )

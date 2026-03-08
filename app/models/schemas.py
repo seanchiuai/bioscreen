@@ -38,10 +38,6 @@ class ScreeningRequest(BaseModel):
     sequence_id: str | None = Field(
         None, description="Optional caller-supplied identifier"
     )
-    run_structure: bool = Field(
-        False,
-        description="Run ESMFold + Foldseek in addition to embedding comparison",
-    )
     top_k: int = Field(5, ge=1, le=50, description="Number of top toxin matches to return")
 
     @field_validator("sequence")
@@ -60,7 +56,6 @@ class BatchScreeningRequest(BaseModel):
     sequences: list[ScreeningRequest] = Field(
         ..., min_length=1, max_length=100, description="List of sequences to screen"
     )
-    run_structure: bool = Field(False, description="Apply to all sequences in batch")
 
 
 # ── Result / response models ──────────────────────────────────────────────────
@@ -78,6 +73,9 @@ class ToxinMatch(BaseModel):
     )
     structure_similarity: float | None = Field(
         None, ge=0.0, le=1.0, description="Foldseek TM-score (if structure run)"
+    )
+    sequence_identity: float | None = Field(
+        None, ge=0.0, le=1.0, description="Foldseek sequence identity fraction (if structure run)"
     )
     go_terms: list[str] = Field(default_factory=list, description="GO term annotations")
     ec_numbers: list[str] = Field(
@@ -115,7 +113,7 @@ class ScreeningResult(BaseModel):
         None, description="Predicted molecular function"
     )
     structure_predicted: bool = Field(
-        False, description="Whether ESMFold was used in this run"
+        True, description="Whether ESMFold was used in this run"
     )
     pdb_string: str | None = Field(
         None, description="ESMFold PDB output for 3D viewer"
@@ -150,6 +148,26 @@ class BatchScreeningResult(BaseModel):
 
 
 # ── Health / info models ──────────────────────────────────────────────────────
+
+
+class CompareRequest(BaseModel):
+    """Request to compare a query structure with a toxin reference."""
+
+    query_pdb: str = Field(..., description="PDB string of the query protein")
+    target_uniprot_id: str = Field(..., description="UniProt accession of the toxin to compare")
+
+
+class CompareResponse(BaseModel):
+    """Structural superposition result for 3D overlay."""
+
+    query_pdb: str = Field(..., description="Original query PDB string (unchanged)")
+    target_pdb: str = Field(..., description="Target toxin PDB aligned to query coordinate frame")
+    target_name: str = Field("", description="Toxin name")
+    target_organism: str = Field("", description="Toxin source organism")
+    rmsd: float = Field(..., description="C-alpha RMSD after alignment (angstroms)")
+    aligned_residues: int = Field(..., description="Number of C-alpha pairs used for alignment")
+    sequence_identity: float | None = Field(None, description="Sequence identity if available")
+    tm_score: float | None = Field(None, description="TM-score if available from prior screening")
 
 
 class HealthResponse(BaseModel):

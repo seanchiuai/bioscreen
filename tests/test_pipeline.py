@@ -75,7 +75,7 @@ def test_score_high_inputs_gives_high_score():
 def test_score_without_structural_sim():
     score, explanation = compute_score(0.7, None, 0.3)
     assert 0.0 <= score <= 1.0
-    assert 'structural analysis not performed' in explanation
+    assert 'structural similarity data unavailable' in explanation
 
 def test_score_zero_inputs():
     score, _ = compute_score(0.0, 0.0, 0.0)
@@ -118,7 +118,7 @@ def test_no_structure_redistributes_weights():
     """When structure is unavailable, weights shift to embedding + function."""
     score, explanation = compute_score(0.9, None, 0.5)
     assert 0.0 <= score <= 1.0
-    assert 'structural analysis not performed' in explanation
+    assert 'structural similarity data unavailable' in explanation
 
 def test_active_site_overlap_increases_score():
     """Active site similarity should increase risk score."""
@@ -236,12 +236,14 @@ def test_embedding_searcher_skips_negative_indices():
 
 def test_foldseek_parse_m8():
     searcher = FoldseekSearcher.__new__(FoldseekSearcher)
-    m8 = "query\t4HFI.A\t0.85\t0.72\t150\t0.95\nquery\t1ABC.B\t0.60\t0.55\t100\t0.80\n"
+    m8 = "query\t4HFI.A\t0.85\t0.72\t0.25\t150\t0.95\nquery\t1ABC.B\t0.60\t0.55\t0.10\t100\t0.80\n"
     hits = searcher._parse_m8(m8)
     assert len(hits) == 2
     assert hits[0].tm_score == 0.85  # sorted descending
     assert hits[0].target_id == '4HFI'
+    assert hits[0].fident == 0.25
     assert hits[1].tm_score == 0.60
+    assert hits[1].fident == 0.10
 
 def test_foldseek_parse_m8_empty():
     searcher = FoldseekSearcher.__new__(FoldseekSearcher)
@@ -346,7 +348,7 @@ def test_score_with_all_none_structure():
     """Score should work when structure is explicitly None."""
     score, explanation = compute_score(0.5, None, 0.5)
     assert 0.0 <= score <= 1.0
-    assert 'structural analysis not performed' in explanation
+    assert 'structural similarity data unavailable' in explanation
 
 def test_screening_request_rejects_empty():
     with pytest.raises(Exception):
