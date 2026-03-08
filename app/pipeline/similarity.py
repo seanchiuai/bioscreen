@@ -90,7 +90,7 @@ class EmbeddingSimilaritySearcher:
             logger.warning("Toxin DB is empty – returning no embedding hits.")
             return []
 
-        distances, indices = self._db.search(query_embedding, top_k=top_k)
+        distances, indices = self._db.search(query_embedding, k=top_k)
         hits: list[EmbeddingHit] = []
         for dist, idx in zip(distances, indices):
             if idx < 0:
