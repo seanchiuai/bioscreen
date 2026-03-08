@@ -265,7 +265,7 @@ def _draw_title_card(fig, video_data: ProteinVideoData, alpha: float = 1.0):
                   fontsize=16, fontweight="bold", color=risk_color,
                   fontfamily="monospace", alpha=alpha)
 
-    mode = "Full (Structure + Embedding + Function)" if video_data.structure_predicted else "Fast (Embedding + Function)"
+    mode = "Full (Structure + Embedding + Function)"
     ax_title.text(0.5, 0.30, f"Mode: {mode}", ha="center", va="center",
                   fontsize=7.5, color=(0.5, 0.5, 0.6, alpha), fontfamily="monospace")
 

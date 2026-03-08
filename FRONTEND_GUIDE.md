@@ -32,15 +32,13 @@ This is the main endpoint. Returns risk score, top toxin matches, function predi
 ```json
 {
   "sequence": "MKTLLLAVAVVAFVCLGSADQLGLGRQQIDWGQGQAVGPPYTLCFECNRM...",
-  "run_structure": true,
   "top_k": 5,
   "sequence_id": "demo-query-1"
 }
 ```
 
 - `sequence`: amino acid string (required, min 10 chars). FASTA headers are auto-stripped.
-- `run_structure`: `false` = fast path (~0.5s, embedding only). `true` = full path (~3s, includes ESMFold + Foldseek + active site). **Use `true` for the demo.**
-- `top_k`: number of top toxin matches to return (default 5)
+- `top_k`: number of top toxin matches to return (default 5). Structure analysis (ESMFold + Foldseek + active site) always runs.
 - `sequence_id`: optional label
 
 **Headers (optional):**
@@ -87,7 +85,7 @@ This is the main endpoint. Returns risk score, top toxin matches, function predi
 - `risk_score` (0-1) and `risk_level` ("LOW" / "MEDIUM" / "HIGH") → risk gauge
 - `top_matches` → toxin match table
 - `risk_factors.max_embedding_similarity` → embedding signal bar
-- `risk_factors.max_structure_similarity` → structure signal bar (null if `run_structure=false`)
+- `risk_factors.max_structure_similarity` → structure signal bar (null if structure prediction fails)
 - `risk_factors.score_explanation` → human-readable explanation text
 - `risk_factors.session_anomaly_score` → session monitoring indicator
 - `function_prediction.summary` → function annotation section
@@ -260,9 +258,6 @@ The anomaly score updates automatically with each query — no extra calls neede
 
 ## Performance Expectations
 
-| Mode | Latency | When to use |
-|---|---|---|
-| Fast path (`run_structure: false`) | ~0.5s | Quick triage, session monitoring demo |
-| Full path (`run_structure: true`) | ~2-4s | Main demo, shows structure + active site |
+All screening runs the full pipeline (embedding + structure + function), typically ~2-4s per sequence.
 
 First request after server start takes ~10s (model loading). Subsequent requests are fast.
