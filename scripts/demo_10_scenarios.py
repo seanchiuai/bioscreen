@@ -227,15 +227,32 @@ async def main():
     section(9, "Convergent Optimization Attack (session monitoring)")
     print(f"  8 queries that individually score LOW but converge toward a toxin\n")
 
-    from app.monitoring import default_store as store, default_analyzer as analyzer
+    from app.monitoring.session_store import SessionStore
+    from app.monitoring.analyzer import SessionAnalyzer
     from app.monitoring.schemas import SessionEntry
 
+    store = SessionStore(window_size=50, ttl_seconds=3600)
+    analyzer = SessionAnalyzer()
     session_id = "attacker-demo-session"
     toxin_emb = model.embed(irditoxin["sequence"])
 
+    # Start with completely random sequences, progressively mix in toxin
+    benign_seqs = [
+        "KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQINSRYWCNDGKTPGAVNACHLSCSALLQDNIADAVACAKRVVRDPQGIRAWVAWRNRCQNRDVRQYVQGCGV",
+        "MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTFSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIEL",
+        "MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLAS",
+    ]
     for i in range(8):
-        mix = i / 7.0 * 0.6
-        seq = scramble_sequence(irditoxin["sequence"], mutation_rate=1.0 - mix)
+        # Early queries: benign-ish. Late queries: toxin-like.
+        t = i / 7.0
+        if t < 0.4:
+            # Use benign sequence with some random mutation
+            base = benign_seqs[i % len(benign_seqs)]
+            seq = scramble_sequence(base, mutation_rate=0.3)
+        else:
+            # Progressively more toxin-like
+            mix = (t - 0.4) / 0.6  # 0 → 1
+            seq = scramble_sequence(irditoxin["sequence"], mutation_rate=1.0 - mix * 0.7)
         emb = model.embed(seq)
         sim = float(np.dot(emb, toxin_emb) / (np.linalg.norm(emb) * np.linalg.norm(toxin_emb)))
 

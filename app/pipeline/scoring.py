@@ -152,6 +152,17 @@ def compute_score(
 
     final_score = min(1.0, raw_score + bonus)
 
+    # Hard floor: very high embedding similarity (>0.95) is suspicious when
+    # structural analysis either wasn't run or found partial matches.
+    # Do NOT apply if structure was run and clearly found no match (TM < 0.1),
+    # as that means the fold is genuinely different despite sequence features.
+    structure_clears = (structural_sim is not None and structural_sim < 0.1)
+    if (embedding_sim > 0.95 and length_confidence >= 0.8
+            and final_score < 0.50 and not structure_clears):
+        final_score = 0.50
+        bonus += 0.50 - raw_score
+        high_confidence_signals = max(high_confidence_signals, 1)
+
     # Generate explanation
     explanation = _generate_explanation(
         final_score=final_score,
