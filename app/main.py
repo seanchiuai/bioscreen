@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
         )
     else:
         logger.warning(
-            "Toxin DB not found at {}. Run scripts/build_toxin_db.py first.",
+            "Toxin DB not found at {}. Run scripts/build_db.py first.",
             settings.toxin_db_path,
         )
 

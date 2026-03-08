@@ -47,7 +47,7 @@ async def main():
         "--output-dir",
         type=Path,
         default=Path("data"),
-        help="Directory to save database files (proteins.index and proteins.json)"
+        help="Directory to save database files (toxin_db.faiss and toxin_meta.json)"
     )
 
     parser.add_argument(

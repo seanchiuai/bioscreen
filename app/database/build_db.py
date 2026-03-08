@@ -288,9 +288,9 @@ async def build_database(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # File paths
-    index_path = output_dir / "proteins.index"
-    metadata_path = output_dir / "proteins.json"
+    # File paths — must match config defaults so the app finds them at startup
+    index_path = output_dir / "toxin_db.faiss"
+    metadata_path = output_dir / "toxin_meta.json"
 
     logger.info(f"Building protein database in {output_dir}")
     logger.info(f"Target: {max_proteins} proteins")
