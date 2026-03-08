@@ -117,6 +117,15 @@ class ScreeningResult(BaseModel):
     structure_predicted: bool = Field(
         False, description="Whether ESMFold was used in this run"
     )
+    pdb_string: str | None = Field(
+        None, description="ESMFold PDB output for 3D viewer"
+    )
+    pocket_residues: list[int] = Field(
+        default_factory=list, description="Active site pocket residue indices"
+    )
+    danger_residues: list[int] = Field(
+        default_factory=list, description="Residue indices matching toxin active sites"
+    )
     risk_factors: dict[str, Any] = Field(
         default_factory=dict,
         description="Intermediate signals contributing to the risk score",

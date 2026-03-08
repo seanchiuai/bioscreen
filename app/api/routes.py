@@ -222,6 +222,9 @@ async def screen_sequence(
         # Active site score: combine Foldseek lDDT (local geometry) with
         # pocket-based RMSD comparison when structure is available
         active_site_score = None
+        pocket_residues: list[int] = []
+        danger_residues: list[int] = []
+
         if request_data.run_structure and similarity_result.structure_hits:
             # Foldseek lDDT captures local structural conservation
             max_lddt = max(h.lddt for h in similarity_result.structure_hits)
@@ -230,8 +233,15 @@ async def screen_sequence(
             # Refine with pocket RMSD if query structure available
             if pdb_string:
                 try:
-                    from app.pipeline.active_site import compute_active_site_score
+                    from app.pipeline.active_site import detect_pockets, compute_active_site_score
                     from pathlib import Path
+
+                    # Detect pockets in query structure
+                    query_pockets = detect_pockets(pdb_string)
+                    for pocket in query_pockets:
+                        pocket_residues.extend(pocket.residue_indices)
+
+                    # Compare against top Foldseek hits
                     target_pdbs = {}
                     for hit in similarity_result.structure_hits[:5]:
                         pdb_path = Path(f"data/toxin_structures/{hit.target_id}.pdb")
@@ -241,8 +251,10 @@ async def screen_sequence(
                         site_matches = compute_active_site_score(pdb_string, target_pdbs, top_k=3)
                         if site_matches:
                             pocket_score = site_matches[0].overlap_score
-                            # Combine: 60% lDDT + 40% pocket RMSD
                             active_site_score = 0.6 * max_lddt + 0.4 * pocket_score
+                            # Danger residues: pocket residues from the best-matching site
+                            if pocket_score > 0.3:
+                                danger_residues = list(site_matches[0].query_pocket.residue_indices)
                 except Exception as e:
                     logger.warning(f"Active site comparison failed: {e}")
 
@@ -313,6 +325,9 @@ async def screen_sequence(
             top_matches=top_matches,
             function_prediction=function_prediction,
             structure_predicted=structure_predicted,
+            pdb_string=pdb_string,
+            pocket_residues=pocket_residues,
+            danger_residues=danger_residues,
             risk_factors=risk_factors,
             warnings=warnings,
         )
