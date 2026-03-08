@@ -291,7 +291,7 @@ def main():
                     matches_df = pd.DataFrame(matches_data)
                     st.dataframe(
                         matches_df,
-                        use_container_width=True,
+                        width="stretch",
                         hide_index=True
                     )
                 else:
