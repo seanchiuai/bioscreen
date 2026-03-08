@@ -175,3 +175,15 @@ def get_esmfold_client() -> ESMFoldClient:
     if _client is None:
         _client = ESMFoldClient()
     return _client
+
+
+async def predict_structure(sequence: str) -> str:
+    """Convenience wrapper: predict structure and return PDB string.
+
+    Raises on failure so callers can catch and handle gracefully.
+    """
+    client = get_esmfold_client()
+    result = await client.predict(sequence)
+    if not result.success:
+        raise RuntimeError(result.error)
+    return result.pdb_string

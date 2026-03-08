@@ -35,8 +35,9 @@ The core screening flow for a protein sequence:
 2. **Embedding** (`embedding.py`) — generates ESM-2 embeddings (`facebook/esm2_t33_650M_UR50D`)
 3. **Similarity search** (`similarity.py`) — cosine similarity via FAISS (fast path) + optional Foldseek structural alignment (full path)
 4. **Structure prediction** (`structure.py`) — ESMFold via NVIDIA NIM API (only when `run_structure=True`)
-5. **Function prediction** (`function.py`) — GO term / EC number classification
-6. **Risk scoring** (`scoring.py`) — weighted combination of embedding similarity (0.5), structural similarity (0.3), function overlap (0.2), with non-linear transforms and synergy bonuses for multiple high-confidence signals
+5. **Active site detection** (`active_site.py`) — identifies binding pockets in PDB structures and compares active site geometry between query and known toxins (BioPython + numpy)
+6. **Function prediction** (`function.py`) — GO term / EC number classification
+7. **Risk scoring** (`scoring.py`) — weighted combination of embedding similarity (0.5), structural similarity (0.3), function overlap (0.2), with non-linear transforms and synergy bonuses for multiple high-confidence signals
 
 ### Two Screening Paths
 
@@ -49,6 +50,16 @@ The core screening flow for a protein sequence:
 - **Configuration** (`config.py`): All settings via `pydantic-settings` `BaseSettings`, read from `.env` file. Cached singleton via `@lru_cache`. Includes screening thresholds, model paths, and API keys.
 - **Pydantic v2 schemas** (`models/schemas.py`): Request/response models with validators (e.g., FASTA header stripping on `ScreeningRequest.sequence`).
 - **Toxin database** (`database/`): FAISS index + JSON metadata sidecar. Built from UniProt Tox-Prot via `scripts/build_db.py`.
+- **Routes** (`api/routes.py`): All API endpoints defined in a single `APIRouter`, mounted under `/api` prefix in `main.py`.
+
+### Session Monitoring (`app/monitoring/`)
+
+Behavioral monitoring layer that detects convergent optimization patterns (e.g., a user iteratively modifying sequences toward a toxin). Key components:
+
+- `session_store.py` — rolling-window session store (50-entry, 1-hour TTL) tracking per-session screening history
+- `analyzer.py` — `SessionAnalyzer` that detects anomalous patterns across a session's entries
+- `schemas.py` — Pydantic models for `SessionEntry`, `SessionState`, `AnomalyAlert`
+- Module-level singletons (`default_store`, `default_analyzer`) used by the API layer
 
 ### API Endpoints (all under `/api` prefix)
 
@@ -58,14 +69,31 @@ The core screening flow for a protein sequence:
 | `/api/batch` | POST | Screen multiple sequences |
 | `/api/health` | GET | Health/readiness check |
 | `/api/toxins` | GET | List toxin DB entries |
+| `/api/session/{id}` | GET | Get session state/history |
+| `/api/session/{id}/alerts` | GET | Get anomaly alerts for session |
 
 ## Environment Setup
 
 Requires `.env` file (copy from `.env.example`). Key variables:
 - `NVIDIA_API_KEY` — for ESMFold NIM API (structure prediction)
+- `ESMFOLD_API_URL` — ESMFold NIM endpoint URL
 - `DEVICE` — `cpu` or `cuda`
 - `APP_ENV` — `development` or `production`
+- `LOG_LEVEL` — logging level (default `INFO`)
+- `API_HOST` / `API_PORT` — server bind address (default `0.0.0.0:8000`)
+- `ESM2_MODEL_NAME` — HuggingFace model ID for embeddings
+- `TOXIN_DB_PATH` / `TOXIN_META_PATH` — paths to FAISS index and metadata JSON
+- `FOLDSEEK_BIN` / `FOLDSEEK_DB_PATH` — Foldseek binary and database paths
+- `EMBEDDING_SIM_THRESHOLD` / `STRUCTURE_SIM_THRESHOLD` / `RISK_HIGH_THRESHOLD` / `RISK_MEDIUM_THRESHOLD` — screening thresholds
 
 ## Testing
 
-Tests use `pytest` + `pytest-asyncio`. Test file at `tests/test_pipeline.py` covers sequence validation and risk scoring. Tests do not require GPU or external APIs.
+Tests use `pytest` + `pytest-asyncio`. Test files in `tests/`:
+- `test_pipeline.py` — sequence validation and risk scoring
+- `test_schemas.py` — Pydantic model validation
+- `test_analyzer.py` — session anomaly detection logic
+- `test_monitoring_init.py` — monitoring module singleton setup
+- `test_session_store.py` — session store CRUD and TTL behavior
+- `test_session_routes.py` — session API endpoint integration tests
+
+Tests do not require GPU or external APIs.
