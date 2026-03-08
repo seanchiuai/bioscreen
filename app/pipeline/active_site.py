@@ -86,6 +86,10 @@ def detect_pockets(
     if len(ca_atoms) < min_pocket_size:
         return []
 
+    # Skip very short proteins — pocket detection is unreliable below ~40 residues
+    if len(ca_atoms) < 40:
+        return []
+
     coords = np.array(ca_atoms)
     n = len(coords)
 

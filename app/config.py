@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     # ── Foldseek ──────────────────────────────────────────────────────────────
     foldseek_bin: str = Field("foldseek", description="Path to foldseek binary")
     foldseek_db_path: Path = Field(
-        Path("data/foldseek_db/pdb"), description="Foldseek database path"
+        Path("data/foldseek_toxin_db/toxins"), description="Foldseek toxin structure database path"
     )
 
     # ── UniProt build ─────────────────────────────────────────────────────────
