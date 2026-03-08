@@ -4,9 +4,11 @@
 
 Current DNA synthesis screening tools compare sequences against databases of known pathogens using sequence homology. AI protein design tools (RFdiffusion, ProteinMPNN) can now generate novel sequences that fold into the same 3D structure as known toxins while sharing near-zero sequence similarity — **over 75% of these bypass conventional screening** ([Wittmann et al., *Science* 2025](https://doi.org/10.1126/science.adu8578)).
 
-BioScreen evaluates **what a protein does**, not what it looks like. It predicts 3D structure, active-site geometry, and biological function to flag dangerous sequences even when sequence similarity is effectively zero.
+BioScreen has two components: (1) **per-sequence screening** that evaluates what a protein *does*, not what it looks like, using 3D structure prediction, active-site geometry, and functional annotation; and (2) **session/behavioral monitoring** that tracks queries across a session to detect convergent optimization — someone iterating toward a dangerous structure even if each individual query looks benign.
 
 ## How It Works
+
+### Component 1 — Per-Sequence Screening
 
 ```
 Amino Acid Sequence
@@ -23,6 +25,31 @@ Amino Acid Sequence
 **Fast path** (~seconds, CPU): ESM-2 embeddings → cosine similarity against pre-computed toxin database.
 
 **Full path** (~15s, GPU): Adds ESMFold structure prediction → Foldseek structural search → function prediction.
+
+### Component 2 — Session/Behavioral Monitoring
+
+```
+Incoming Queries (per session)
+       │
+       ├──→ Fingerprint (ESM-2 embedding + sequence hash)
+       │         │
+       │         └──→ Sliding-window session store (keyed by session/client ID)
+       │
+       ├──→ Convergent Optimization Detection
+       │         └──→ Pairwise cosine sim across rolling window
+       │             → flag when mean similarity climbs above threshold across ≥N queries
+       │
+       ├──→ Multi-Provider Perturbation Detection
+       │         └──→ Flag near-identical queries (cosine sim > 0.95 + low edit distance)
+       │
+       └──→ Anomaly Score (0–1)
+                 └──→ 0.6 × convergence + 0.4 × perturbation
+```
+
+Detects patterns that per-sequence screening misses:
+- **Convergent optimization** — a user iterating toward a toxin structure across multiple queries, even when no single query is flagged
+- **Multi-provider probing** — near-identical sequences with slight perturbations submitted within a time window, suggesting attempts to probe screening thresholds
+- **Anomaly scoring** — cosine similarity of embeddings in a rolling window + edit-distance clustering → simple, interpretable, and demo-ready
 
 ## Tech Stack
 
@@ -65,6 +92,8 @@ streamlit run frontend/streamlit_app.py
 | `/api/batch` | POST | Screen multiple sequences |
 | `/api/health` | GET | Health check |
 | `/api/toxins` | GET | Reference database stats |
+| `/api/session/{id}` | GET | Current session state and query count |
+| `/api/session/{id}/alerts` | GET | Latest behavioral anomaly assessment |
 
 ### Screen a sequence
 
@@ -103,6 +132,10 @@ bioscreen/
 │   │   ├── similarity.py     # Foldseek + cosine similarity
 │   │   ├── function.py       # GO/EC prediction
 │   │   └── scoring.py        # Combined risk scoring
+│   ├── monitoring/
+│   │   ├── session_store.py  # In-memory sliding-window session store
+│   │   ├── analyzer.py       # Convergence + perturbation detection
+│   │   └── schemas.py        # Session/alert Pydantic models
 │   ├── database/
 │   │   ├── toxin_db.py       # FAISS index management
 │   │   └── build_db.py       # Build reference DB from UniProt
@@ -112,7 +145,9 @@ bioscreen/
 │   ├── build_db.py           # DB builder CLI
 │   └── demo.py               # Demo script
 ├── data/                     # Toxin embeddings/structures
-└── tests/test_pipeline.py    # Tests
+└── tests/
+    ├── test_pipeline.py      # Pipeline tests
+    └── test_session_monitoring.py  # Session monitoring tests
 ```
 
 ## Key References
