@@ -9,7 +9,7 @@ from components.api_client import (
     check_api_health,
     screen_sequence,
     get_session_alerts,
-    DEMO_SEQUENCES,
+    DEMO_CONVERGENCE_SERIES,
 )
 from components.styles import inject_custom_css
 from components.result_viewer import render_results
@@ -96,13 +96,13 @@ def page() -> None:
         if raw_text.strip():
             sequences = _parse_multi_sequences(raw_text)
     else:
-        # Filter out the placeholder entry
-        selectable = {k: v for k, v in DEMO_SEQUENCES.items() if v}
-        chosen = st.multiselect(
-            "Select demo sequences",
-            options=list(selectable.keys()),
+        st.info(
+            "**Convergence attack demo** — 8 sequences that individually look benign "
+            "but progressively converge toward irditoxin snake venom. "
+            "Early queries score LOW; later queries score MEDIUM/HIGH. "
+            "The session monitor flags the pattern even before the final query."
         )
-        sequences = [(name, selectable[name]) for name in chosen]
+        sequences = list(DEMO_CONVERGENCE_SERIES)
 
     top_k = st.number_input("Top K matches", min_value=1, max_value=20, value=5)
 
