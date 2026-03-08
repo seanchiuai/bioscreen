@@ -214,9 +214,10 @@ def render_results(data: dict, key_prefix: str = "") -> None:
             components_list.append(
                 ("Structure Similarity", struct_sim if struct_sim is not None else 0, weight_set.get("Structure", 0)),
             )
-        components_list.append(
-            ("Function Overlap", func_overlap, weight_set.get("Function", 0)),
-        )
+        if real_fn is not None:
+            components_list.append(
+                ("Function Overlap", func_overlap, weight_set.get("Function", 0)),
+            )
 
         for label, raw_val, weight in components_list:
             pct = int(raw_val * 100)
