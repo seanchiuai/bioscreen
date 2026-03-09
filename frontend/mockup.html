@@ -99,30 +99,136 @@
     letter-spacing: 0.01em;
     padding-bottom: 4px;
   }
-  .nav-pills {
+  .nav-goto-group {
     display: flex;
-    gap: 2px;
-    background: var(--bg-subtle);
-    border-radius: var(--radius-md);
-    padding: 3px;
+    gap: 0.5rem;
   }
-  .nav-pill {
+  .nav-goto {
     padding: 7px 18px;
     font-size: 0.82rem;
     font-weight: 500;
     color: var(--text-secondary);
-    border-radius: 7px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.2s;
-    border: none;
-    background: transparent;
-    font-family: inherit;
-  }
-  .nav-pill:hover { color: var(--text-primary); }
-  .nav-pill.active {
+    border: 1px solid var(--border-default);
     background: var(--bg-card);
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+  .nav-goto:hover {
+    border-color: var(--border-focus);
     color: var(--text-primary);
     box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+  .nav-goto .arrow { font-size: 0.7rem; opacity: 0.5; }
+
+  /* ── Charts ──────────────────────────────────────── */
+  .chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1rem;
+  }
+  .chart-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+  }
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .chart-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .gauge-center-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    fill: var(--text-primary);
+  }
+  .gauge-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    fill: var(--text-tertiary);
+    font-weight: 500;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: center;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+  }
+  .chart-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  /* Radar chart */
+  .radar-axis-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    fill: var(--text-secondary);
+    font-weight: 500;
+  }
+  /* Histogram bars */
+  .hist-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    fill: var(--text-secondary);
+  }
+  .hist-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    fill: var(--text-primary);
+    font-weight: 600;
+  }
+  /* Sparkline */
+  .sparkline-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .sparkline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+  .sparkline-title {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .sparkline-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 700;
   }
   .status-pill {
     display: inline-flex;
@@ -934,9 +1040,9 @@
       </div>
       <span class="tagline">Structure-based biosecurity screening for AI-designed proteins</span>
     </div>
-    <nav class="nav-pills">
-      <button class="nav-pill active">Single Screen</button>
-      <button class="nav-pill">Session Analysis</button>
+    <nav class="nav-goto-group">
+      <a class="nav-goto" href="#single-screen">Single Screen <span class="arrow">&#8594;</span></a>
+      <a class="nav-goto" href="#session-analysis">Session Analysis <span class="arrow">&#8594;</span></a>
     </nav>
   </header>
 
@@ -1005,10 +1111,165 @@
         </div>
       </div>
     </div>
+
+    <!-- Charts row: Radar + Score Contributions -->
+    <div class="chart-row animate-in delay-4">
+      <!-- Radar Chart: Multi-axis threat profile -->
+      <div class="chart-container">
+        <div class="chart-title">Threat Profile</div>
+        <svg viewBox="0 0 200 200" style="width:100%;max-width:240px;display:block;margin:0 auto;">
+          <!-- Grid pentagons -->
+          <polygon points="100,30 166,55 153,130 47,130 34,55" fill="none" stroke="#e0ddd6" stroke-width="0.5"/>
+          <polygon points="100,51 147,68 138,113 62,113 53,68" fill="none" stroke="#e0ddd6" stroke-width="0.5"/>
+          <polygon points="100,72 128,82 123,96 77,96 72,82" fill="none" stroke="#e0ddd6" stroke-width="0.5"/>
+          <!-- Axes -->
+          <line x1="100" y1="100" x2="100" y2="30" stroke="#e0ddd6" stroke-width="0.5"/>
+          <line x1="100" y1="100" x2="166" y2="55" stroke="#e0ddd6" stroke-width="0.5"/>
+          <line x1="100" y1="100" x2="153" y2="130" stroke="#e0ddd6" stroke-width="0.5"/>
+          <line x1="100" y1="100" x2="47" y2="130" stroke="#e0ddd6" stroke-width="0.5"/>
+          <line x1="100" y1="100" x2="34" y2="55" stroke="#e0ddd6" stroke-width="0.5"/>
+          <!-- Data polygon -->
+          <polygon points="100,35 160,58 120,125 55,118 42,60" fill="rgba(220,53,69,0.12)" stroke="#dc3545" stroke-width="1.5"/>
+          <!-- Data points -->
+          <circle cx="100" cy="35" r="3" fill="#dc3545"/>
+          <circle cx="160" cy="58" r="3" fill="#dc3545"/>
+          <circle cx="120" cy="125" r="3" fill="#dc3545"/>
+          <circle cx="55" cy="118" r="3" fill="#dc3545"/>
+          <circle cx="42" cy="60" r="3" fill="#dc3545"/>
+          <!-- Labels -->
+          <text x="100" y="22" text-anchor="middle" class="radar-axis-label">Embedding</text>
+          <text x="176" y="52" text-anchor="start" class="radar-axis-label">Structure</text>
+          <text x="160" y="140" text-anchor="start" class="radar-axis-label">Function</text>
+          <text x="40" y="145" text-anchor="end" class="radar-axis-label">Active Site</text>
+          <text x="24" y="52" text-anchor="end" class="radar-axis-label">Toxin Class</text>
+        </svg>
+      </div>
+
+      <!-- Score Contribution Donut -->
+      <div class="chart-container">
+        <div class="chart-title">Score Contributions</div>
+        <svg viewBox="0 0 200 160" style="width:100%;max-width:240px;display:block;margin:0 auto;">
+          <!-- Donut segments: Embedding 0.484, Structure 0.292, Function 0.070 -->
+          <!-- Total = 0.847. Percentages: 57.1%, 34.5%, 8.3% -->
+          <circle cx="100" cy="75" r="55" fill="none" stroke="#e0ddd6" stroke-width="22"/>
+          <!-- Function: 8.3% => ~30 arc length, green (low contribution) -->
+          <circle cx="100" cy="75" r="55" fill="none" stroke="#2a9d5c" stroke-width="22"
+            stroke-dasharray="29.8 315.8" stroke-dashoffset="0" transform="rotate(-90 100 75)"/>
+          <!-- Structure: 34.5% => 119.2 arc length, orange (medium contribution) -->
+          <circle cx="100" cy="75" r="55" fill="none" stroke="#d48c0e" stroke-width="22"
+            stroke-dasharray="119.2 226.4" stroke-dashoffset="-29.8" transform="rotate(-90 100 75)"/>
+          <!-- Embedding: 57.1% => 197.2 arc length, red (high contribution) -->
+          <circle cx="100" cy="75" r="55" fill="none" stroke="#dc3545" stroke-width="22"
+            stroke-dasharray="197.2 148.4" stroke-dashoffset="-149" transform="rotate(-90 100 75)"/>
+          <!-- Center text -->
+          <text x="100" y="72" text-anchor="middle" class="gauge-center-text" font-size="18">0.847</text>
+          <text x="100" y="86" text-anchor="middle" class="gauge-label">total</text>
+        </svg>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#dc3545;"></div>Embedding (0.484)</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#d48c0e;"></div>Structure (0.292)</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#2a9d5c;"></div>Function (0.070)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Similarity Comparison Bar Chart -->
+    <div class="chart-container animate-in delay-5">
+      <div class="chart-title">Top 5 Matches — Embedding vs Structure Similarity</div>
+      <svg viewBox="0 0 600 200" style="width:100%;display:block;">
+        <!-- Y axis -->
+        <line x1="140" y1="10" x2="140" y2="175" stroke="#e0ddd6" stroke-width="1"/>
+        <!-- Grid lines -->
+        <line x1="140" y1="175" x2="580" y2="175" stroke="#eceae4" stroke-width="0.5"/>
+        <line x1="140" y1="131" x2="580" y2="131" stroke="#eceae4" stroke-width="0.5"/>
+        <line x1="140" y1="87" x2="580" y2="87" stroke="#eceae4" stroke-width="0.5"/>
+        <line x1="140" y1="43" x2="580" y2="43" stroke="#eceae4" stroke-width="0.5"/>
+        <!-- Y labels -->
+        <text x="135" y="178" text-anchor="end" class="hist-label">0.0</text>
+        <text x="135" y="134" text-anchor="end" class="hist-label">0.25</text>
+        <text x="135" y="90" text-anchor="end" class="hist-label">0.50</text>
+        <text x="135" y="46" text-anchor="end" class="hist-label">0.75</text>
+        <text x="135" y="16" text-anchor="end" class="hist-label">1.0</text>
+        <!-- Match 1: Aah4 -->
+        <rect x="160" y="16" width="30" height="159" rx="3" fill="#1a1a1a" opacity="0.85"/>
+        <rect x="194" y="12" width="30" height="163" rx="3" fill="#dc3545" opacity="0.7"/>
+        <text x="192" y="195" text-anchor="middle" class="hist-label">Aah4</text>
+        <!-- Match 2: BmKM1 -->
+        <rect x="248" y="20" width="30" height="155" rx="3" fill="#1a1a1a" opacity="0.85"/>
+        <rect x="282" y="32" width="30" height="143" rx="3" fill="#dc3545" opacity="0.7"/>
+        <text x="280" y="195" text-anchor="middle" class="hist-label">BmKM1</text>
+        <!-- Match 3: CsE5 -->
+        <rect x="336" y="25" width="30" height="150" rx="3" fill="#1a1a1a" opacity="0.85"/>
+        <rect x="370" y="38" width="30" height="137" rx="3" fill="#dc3545" opacity="0.7"/>
+        <text x="368" y="195" text-anchor="middle" class="hist-label">CsE5</text>
+        <!-- Match 4: Ts1 -->
+        <rect x="424" y="30" width="30" height="145" rx="3" fill="#1a1a1a" opacity="0.85"/>
+        <rect x="458" y="45" width="30" height="130" rx="3" fill="#dc3545" opacity="0.7"/>
+        <text x="456" y="195" text-anchor="middle" class="hist-label">Ts1</text>
+        <!-- Match 5: Charybdotoxin -->
+        <rect x="512" y="34" width="30" height="141" rx="3" fill="#1a1a1a" opacity="0.85"/>
+        <rect x="546" y="52" width="30" height="123" rx="3" fill="#dc3545" opacity="0.7"/>
+        <text x="544" y="195" text-anchor="middle" class="hist-label">ChTx</text>
+      </svg>
+      <div class="chart-legend">
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#1a1a1a;"></div>Embedding Similarity</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#dc3545;"></div>Structure Similarity</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── Matches Tab ── -->
   <div id="tab-matches" class="tab-content" style="display:none;">
+
+    <!-- Similarity Heatmap -->
+    <div class="chart-container animate-in delay-3">
+      <div class="chart-title">Pairwise Similarity Heatmap (Top 5 vs Query)</div>
+      <svg viewBox="0 0 520 180" style="width:100%;display:block;">
+        <!-- Column labels -->
+        <text x="195" y="15" text-anchor="middle" class="hist-label" font-size="9">Query</text>
+        <text x="270" y="15" text-anchor="middle" class="hist-label" font-size="9">Aah4</text>
+        <text x="345" y="15" text-anchor="middle" class="hist-label" font-size="9">BmKM1</text>
+        <text x="420" y="15" text-anchor="middle" class="hist-label" font-size="9">CsE5</text>
+        <text x="495" y="15" text-anchor="middle" class="hist-label" font-size="9">Ts1</text>
+        <!-- Row 1: Query -->
+        <text x="155" y="42" text-anchor="end" class="hist-label" font-size="9">Query</text>
+        <rect x="168" y="25" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="195" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+        <rect x="243" y="25" width="55" height="25" rx="3" fill="#c0392b"/><text x="270" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.968</text>
+        <rect x="318" y="25" width="55" height="25" rx="3" fill="#d4553e"/><text x="345" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.941</text>
+        <rect x="393" y="25" width="55" height="25" rx="3" fill="#e06a54"/><text x="420" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.915</text>
+        <rect x="468" y="25" width="55" height="25" rx="3" fill="#e88068"/><text x="495" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.882</text>
+        <!-- Row 2: Aah4 -->
+        <text x="155" y="72" text-anchor="end" class="hist-label" font-size="9">Aah4</text>
+        <rect x="168" y="55" width="55" height="25" rx="3" fill="#c0392b"/><text x="195" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.968</text>
+        <rect x="243" y="55" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="270" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+        <rect x="318" y="55" width="55" height="25" rx="3" fill="#d4553e"/><text x="345" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.952</text>
+        <rect x="393" y="55" width="55" height="25" rx="3" fill="#e06a54"/><text x="420" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.928</text>
+        <rect x="468" y="55" width="55" height="25" rx="3" fill="#e88068"/><text x="495" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.891</text>
+        <!-- Row 3: BmKM1 -->
+        <text x="155" y="102" text-anchor="end" class="hist-label" font-size="9">BmKM1</text>
+        <rect x="168" y="85" width="55" height="25" rx="3" fill="#d4553e"/><text x="195" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.941</text>
+        <rect x="243" y="85" width="55" height="25" rx="3" fill="#d4553e"/><text x="270" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.952</text>
+        <rect x="318" y="85" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="345" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+        <rect x="393" y="85" width="55" height="25" rx="3" fill="#d4553e"/><text x="420" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.944</text>
+        <rect x="468" y="85" width="55" height="25" rx="3" fill="#e06a54"/><text x="495" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.903</text>
+        <!-- Row 4: CsE5 -->
+        <text x="155" y="132" text-anchor="end" class="hist-label" font-size="9">CsE5</text>
+        <rect x="168" y="115" width="55" height="25" rx="3" fill="#e06a54"/><text x="195" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.915</text>
+        <rect x="243" y="115" width="55" height="25" rx="3" fill="#e06a54"/><text x="270" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.928</text>
+        <rect x="318" y="115" width="55" height="25" rx="3" fill="#d4553e"/><text x="345" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.944</text>
+        <rect x="393" y="115" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="420" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+        <rect x="468" y="115" width="55" height="25" rx="3" fill="#e88068"/><text x="495" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.876</text>
+        <!-- Row 5: Ts1 -->
+        <text x="155" y="162" text-anchor="end" class="hist-label" font-size="9">Ts1</text>
+        <rect x="168" y="145" width="55" height="25" rx="3" fill="#e88068"/><text x="195" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.882</text>
+        <rect x="243" y="145" width="55" height="25" rx="3" fill="#e88068"/><text x="270" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.891</text>
+        <rect x="318" y="145" width="55" height="25" rx="3" fill="#e06a54"/><text x="345" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.903</text>
+        <rect x="393" y="145" width="55" height="25" rx="3" fill="#e88068"/><text x="420" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.876</text>
+        <rect x="468" y="145" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="495" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+      </svg>
+    </div>
+
     <div class="matches-table-wrap animate-in delay-3">
       <table class="matches-table">
         <thead>
@@ -1131,6 +1392,70 @@
         <span class="score-total-value risk-high">0.847</span>
       </div>
     </div>
+
+    <!-- Waterfall chart -->
+    <div class="chart-container animate-in delay-4">
+      <div class="chart-title">Score Waterfall — Component Contributions</div>
+      <svg viewBox="0 0 500 200" style="width:100%;display:block;">
+        <!-- Grid -->
+        <line x1="80" y1="170" x2="460" y2="170" stroke="#e0ddd6" stroke-width="0.5"/>
+        <line x1="80" y1="130" x2="460" y2="130" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+        <line x1="80" y1="90" x2="460" y2="90" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+        <line x1="80" y1="50" x2="460" y2="50" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+        <line x1="80" y1="10" x2="460" y2="10" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+        <!-- Y labels -->
+        <text x="75" y="173" text-anchor="end" class="hist-label">0.0</text>
+        <text x="75" y="133" text-anchor="end" class="hist-label">0.25</text>
+        <text x="75" y="93" text-anchor="end" class="hist-label">0.50</text>
+        <text x="75" y="53" text-anchor="end" class="hist-label">0.75</text>
+        <text x="75" y="16" text-anchor="end" class="hist-label">1.0</text>
+        <!-- Bar 1: Embedding contribution (+0.484) -->
+        <rect x="110" y="92.4" width="70" height="77.6" rx="4" fill="#1a1a1a" opacity="0.85"/>
+        <text x="145" y="85" text-anchor="middle" class="hist-value" font-size="11">+0.484</text>
+        <text x="145" y="190" text-anchor="middle" class="hist-label">Embedding</text>
+        <!-- Connector line -->
+        <line x1="180" y1="92.4" x2="210" y2="92.4" stroke="#e0ddd6" stroke-width="1" stroke-dasharray="3"/>
+        <!-- Bar 2: Structure contribution (+0.292) starts at 0.484 -->
+        <rect x="210" y="45.6" width="70" height="46.8" rx="4" fill="#444" opacity="0.85"/>
+        <text x="245" y="38" text-anchor="middle" class="hist-value" font-size="11">+0.292</text>
+        <text x="245" y="190" text-anchor="middle" class="hist-label">Structure</text>
+        <!-- Connector -->
+        <line x1="280" y1="45.6" x2="310" y2="45.6" stroke="#e0ddd6" stroke-width="1" stroke-dasharray="3"/>
+        <!-- Bar 3: Function contribution (+0.070) starts at 0.776 -->
+        <rect x="310" y="34.4" width="70" height="11.2" rx="4" fill="#9c9690" opacity="0.85"/>
+        <text x="345" y="27" text-anchor="middle" class="hist-value" font-size="11">+0.070</text>
+        <text x="345" y="190" text-anchor="middle" class="hist-label">Function</text>
+        <!-- Connector -->
+        <line x1="380" y1="34.4" x2="410" y2="34.4" stroke="#e0ddd6" stroke-width="1" stroke-dasharray="3"/>
+        <!-- Bar 4: Total = 0.847 -->
+        <rect x="410" y="34.4" width="50" height="135.6" rx="4" fill="#dc3545" opacity="0.75"/>
+        <text x="435" y="27" text-anchor="middle" class="hist-value" font-size="13" fill="#dc3545">0.847</text>
+        <text x="435" y="190" text-anchor="middle" class="hist-label" font-weight="600">Total</text>
+      </svg>
+    </div>
+
+    <!-- Threshold comparison -->
+    <div class="chart-container animate-in delay-5">
+      <div class="chart-title">Risk Thresholds</div>
+      <svg viewBox="0 0 500 60" style="width:100%;display:block;">
+        <!-- Background bar -->
+        <rect x="10" y="15" width="480" height="20" rx="10" fill="#eceae4"/>
+        <!-- Green zone -->
+        <rect x="10" y="15" width="144" height="20" rx="10" fill="#2a9d5c" opacity="0.25"/>
+        <!-- Yellow zone -->
+        <rect x="154" y="15" width="120" height="20" fill="#d48c0e" opacity="0.25"/>
+        <!-- Red zone -->
+        <rect x="274" y="15" width="216" height="20" rx="10" fill="#dc3545" opacity="0.25"/>
+        <!-- Threshold markers -->
+        <line x1="154" y1="10" x2="154" y2="40" stroke="#d48c0e" stroke-width="2"/>
+        <text x="154" y="52" text-anchor="middle" class="hist-label" fill="#d48c0e" font-weight="600">0.3 Medium</text>
+        <line x1="274" y1="10" x2="274" y2="40" stroke="#dc3545" stroke-width="2"/>
+        <text x="274" y="52" text-anchor="middle" class="hist-label" fill="#dc3545" font-weight="600">0.55 High</text>
+        <!-- Current score marker -->
+        <circle cx="416" cy="25" r="8" fill="#dc3545" stroke="white" stroke-width="2"/>
+        <text x="416" y="7" text-anchor="middle" class="hist-value" font-size="11" fill="#dc3545">0.847</text>
+      </svg>
+    </div>
   </div>
 
   <!-- ── Function Tab ── -->
@@ -1176,6 +1501,62 @@
         </div>
         <div class="func-bar"><div class="func-bar-fill" style="width:45%"></div></div>
       </div>
+    </div>
+
+    <!-- GO Term Confidence Horizontal Bar Chart -->
+    <div class="chart-container animate-in delay-5" style="margin-top:1rem;">
+      <div class="chart-title">Predicted Function Confidence</div>
+      <svg viewBox="0 0 500 190" style="width:100%;display:block;">
+        <!-- Row 1 -->
+        <text x="148" y="22" text-anchor="end" class="hist-label" font-size="9">extracellular region</text>
+        <rect x="155" y="10" width="294" height="18" rx="3" fill="#1a1a1a" opacity="0.7"/>
+        <text x="455" y="23" class="hist-value" font-size="10">0.92</text>
+        <!-- Row 2 -->
+        <text x="148" y="52" text-anchor="end" class="hist-label" font-size="9">defense response</text>
+        <rect x="155" y="40" width="278" height="18" rx="3" fill="#1a1a1a" opacity="0.6"/>
+        <text x="439" y="53" class="hist-value" font-size="10">0.87</text>
+        <!-- Row 3 -->
+        <text x="148" y="82" text-anchor="end" class="hist-label" font-size="9">toxin activity</text>
+        <rect x="155" y="70" width="268" height="18" rx="3" fill="#dc3545" opacity="0.6"/>
+        <text x="429" y="83" class="hist-value" font-size="10" fill="#dc3545">0.84</text>
+        <!-- Row 4 -->
+        <text x="148" y="112" text-anchor="end" class="hist-label" font-size="9">Na+ channel inhibitor</text>
+        <rect x="155" y="100" width="227" height="18" rx="3" fill="#d48c0e" opacity="0.5"/>
+        <text x="388" y="113" class="hist-value" font-size="10">0.71</text>
+        <!-- Row 5 -->
+        <text x="148" y="142" text-anchor="end" class="hist-label" font-size="9">acetylcholinesterase</text>
+        <rect x="155" y="130" width="144" height="18" rx="3" fill="#9c9690" opacity="0.5"/>
+        <text x="305" y="143" class="hist-value" font-size="10">0.45</text>
+        <!-- Row 6 -->
+        <text x="148" y="172" text-anchor="end" class="hist-label" font-size="9">ion transport</text>
+        <rect x="155" y="160" width="108" height="18" rx="3" fill="#9c9690" opacity="0.4"/>
+        <text x="269" y="173" class="hist-value" font-size="10">0.34</text>
+      </svg>
+    </div>
+
+    <!-- Function Overlap Venn -->
+    <div class="chart-container animate-in delay-6" style="margin-top:1rem;">
+      <div class="chart-title">Function Overlap — Query vs Top Toxin Match</div>
+      <svg viewBox="0 0 400 160" style="width:100%;max-width:480px;display:block;margin:0 auto;">
+        <!-- Query circle -->
+        <circle cx="155" cy="80" r="60" fill="rgba(26,26,26,0.08)" stroke="#1a1a1a" stroke-width="1.5"/>
+        <text x="110" y="65" class="hist-label" font-size="10" font-weight="600">Query</text>
+        <text x="110" y="80" class="hist-label" font-size="8">ion transport</text>
+        <text x="110" y="92" class="hist-label" font-size="8">membrane</text>
+        <!-- Overlap -->
+        <text x="190" y="70" class="hist-label" font-size="8" font-weight="600" fill="#dc3545">Shared</text>
+        <text x="190" y="83" class="hist-label" font-size="8" fill="#dc3545">toxin activity</text>
+        <text x="190" y="95" class="hist-label" font-size="8" fill="#dc3545">Na+ channel</text>
+        <text x="190" y="107" class="hist-label" font-size="8" fill="#dc3545">extracellular</text>
+        <!-- Toxin circle -->
+        <circle cx="235" cy="80" r="60" fill="rgba(220,53,69,0.06)" stroke="#dc3545" stroke-width="1.5"/>
+        <text x="262" y="65" class="hist-label" font-size="10" font-weight="600" fill="#dc3545">Aah4</text>
+        <text x="262" y="80" class="hist-label" font-size="8">defense resp.</text>
+        <text x="262" y="92" class="hist-label" font-size="8">venom</text>
+        <!-- Overlap score -->
+        <text x="340" y="140" class="hist-value" font-size="14" fill="#dc3545">35%</text>
+        <text x="340" y="152" class="hist-label" font-size="9">overlap</text>
+      </svg>
     </div>
   </div>
 
