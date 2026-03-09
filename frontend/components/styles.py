@@ -144,6 +144,6 @@ def inject_custom_css() -> None:
     }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    .block-container { padding-top: 2rem; }
+    .block-container { padding-top: 3.5rem; }
     </style>
     """, unsafe_allow_html=True)
