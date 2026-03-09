@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioScreen — Live</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #f4f2ee;
+    --bg-card: #fffffe;
+    --bg-elevated: #ffffff;
+    --bg-input: #f8f7f4;
+    --bg-subtle: #eceae4;
+
+    --border-default: #e0ddd6;
+    --border-light: #eae8e2;
+    --border-focus: #1a1a1a;
+
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b6560;
+    --text-tertiary: #9c9690;
+    --text-inverse: #fffffe;
+
+    --accent: #1a1a1a;
+    --accent-subtle: #f0efec;
+
+    --risk-low: #2a9d5c;
+    --risk-low-bg: #edfbf2;
+    --risk-low-border: #b8eacc;
+    --risk-medium: #d48c0e;
+    --risk-medium-bg: #fef8ec;
+    --risk-medium-border: #f5dfa0;
+    --risk-high: #dc3545;
+    --risk-high-bg: #fef2f2;
+    --risk-high-border: #f5c1c1;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-glow-low: 0 0 20px rgba(42,157,92,0.12);
+    --shadow-glow-medium: 0 0 20px rgba(212,140,14,0.12);
+    --shadow-glow-high: 0 0 20px rgba(220,53,69,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 2rem 4rem;
+  }
+
+  /* ── Header ──────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+  .header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+  .logo-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--risk-high);
+    margin-left: 2px;
+    vertical-align: super;
+    font-size: 0;
+  }
+  .tagline {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.01em;
+    padding-bottom: 4px;
+  }
+  .nav-goto-group {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .nav-goto {
+    padding: 7px 18px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border-default);
+    background: var(--bg-card);
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+  .nav-goto:hover {
+    border-color: var(--border-focus);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+  .nav-goto .arrow { font-size: 0.7rem; opacity: 0.5; }
+
+  /* ── Charts ──────────────────────────────────────── */
+  .chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1rem;
+  }
+  .chart-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+  }
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .chart-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .gauge-center-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    fill: var(--text-primary);
+  }
+  .gauge-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    fill: var(--text-tertiary);
+    font-weight: 500;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: center;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+  }
+  .chart-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  /* Radar chart */
+  .radar-axis-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    fill: var(--text-secondary);
+    font-weight: 500;
+  }
+  /* Histogram bars */
+  .hist-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    fill: var(--text-secondary);
+  }
+  .hist-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    fill: var(--text-primary);
+    font-weight: 600;
+  }
+  /* Sparkline */
+  .sparkline-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .sparkline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+  .sparkline-title {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .sparkline-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--risk-low);
+    background: var(--risk-low-bg);
+    border: 1px solid var(--risk-low-border);
+    border-radius: 999px;
+    padding: 4px 12px 4px 8px;
+    margin-left: 1.5rem;
+    transition: all 0.3s;
+  }
+  .status-pill.disconnected {
+    color: var(--risk-high);
+    background: var(--risk-high-bg);
+    border-color: var(--risk-high-border);
+  }
+  .status-pill.checking {
+    color: var(--risk-medium);
+    background: var(--risk-medium-bg);
+    border-color: var(--risk-medium-border);
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── Input Section ───────────────────────────────── */
+  .input-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .input-section-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 0.75rem;
+  }
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.25rem;
+  }
+  .seq-textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-input);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    resize: vertical;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+  .seq-textarea::placeholder { color: var(--text-tertiary); }
+  .seq-textarea:focus { outline: none; border-color: var(--border-focus); }
+
+  .seq-len-caption {
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .controls-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .select-wrap {
+    position: relative;
+  }
+  .select-input {
+    width: 100%;
+    padding: 0.6rem 2rem 0.6rem 0.85rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    font-family: inherit;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    appearance: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .select-input:focus { outline: none; border-color: var(--border-focus); }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: 0.7rem;
+    pointer-events: none;
+  }
+  .input-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  .text-input {
+    flex: 1;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    font-family: inherit;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+  }
+  .text-input::placeholder { color: var(--text-tertiary); }
+  .text-input:focus { outline: none; border-color: var(--border-focus); }
+  .topk-input {
+    width: 70px;
+    text-align: center;
+    padding: 0.6rem 0.5rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+  }
+  .topk-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+  .btn-screen {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--text-primary);
+    color: var(--text-inverse);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+    margin-top: auto;
+  }
+  .btn-screen:hover:not(:disabled) { background: #333; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-screen:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ── Section Label ───────────────────────────────── */
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+  }
+
+  /* ── Tab Bar ─────────────────────────────────────── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: 1.5rem;
+  }
+  .tab-item {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: inherit;
+  }
+  .tab-item:hover { color: var(--text-primary); }
+  .tab-item.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* ── Summary Cards ───────────────────────────────── */
+  .cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.3s, transform 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+  .card-risk::before { background: linear-gradient(90deg, var(--risk-high), var(--risk-medium)); }
+  .card-risk { box-shadow: var(--shadow-sm), var(--shadow-glow-high); }
+  .card-match::before { background: linear-gradient(90deg, var(--accent), var(--text-tertiary)); }
+  .card-mode::before { background: linear-gradient(90deg, var(--risk-low), #4ade80); }
+
+  .card-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 0.6rem;
+  }
+  .card-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+  .card-value.risk-high { color: var(--risk-high); }
+  .card-value.risk-medium { color: var(--risk-medium); }
+  .card-value.risk-low { color: var(--risk-low); }
+
+  .risk-bar {
+    height: 6px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+  .risk-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .risk-bar-fill.high {
+    background: linear-gradient(90deg, var(--risk-medium), var(--risk-high));
+  }
+  .risk-bar-fill.medium {
+    background: linear-gradient(90deg, var(--risk-low), var(--risk-medium));
+  }
+  .risk-bar-fill.low {
+    background: linear-gradient(90deg, #6ee7a0, var(--risk-low));
+  }
+  .risk-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .risk-badge.high { background: var(--risk-high-bg); color: var(--risk-high); }
+  .risk-badge.medium { background: var(--risk-medium-bg); color: var(--risk-medium); }
+  .risk-badge.low { background: var(--risk-low-bg); color: var(--risk-low); }
+
+  .match-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .match-organism {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-bottom: 0.6rem;
+  }
+  .match-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .match-score-type {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-left: 4px;
+  }
+  .mode-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+  }
+  .mode-detail {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+  }
+  .mode-badges {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .mode-badge {
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+  }
+
+  /* ── Score Breakdown ─────────────────────────────── */
+  .score-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+  }
+  .score-row {
+    display: grid;
+    grid-template-columns: 160px 1fr 60px;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .score-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    text-align: right;
+    font-weight: 500;
+  }
+  .score-track {
+    height: 28px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    position: relative;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, #1a1a1a, #444);
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+  }
+  .score-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 30px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15));
+  }
+  .score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
+  }
+  .score-meta {
+    grid-column: 2;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    margin-top: -0.6rem;
+    margin-bottom: 0.5rem;
+  }
+  .score-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+    margin-top: 0.5rem;
+  }
+  .score-total-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .score-total-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  /* ── Verdict ─────────────────────────────────────── */
+  .verdict-card {
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .verdict-card.high {
+    background: var(--risk-high-bg);
+    border: 1px solid var(--risk-high-border);
+    color: var(--risk-high);
+    box-shadow: var(--shadow-glow-high);
+  }
+  .verdict-card.medium {
+    background: var(--risk-medium-bg);
+    border: 1px solid var(--risk-medium-border);
+    color: var(--risk-medium);
+    box-shadow: var(--shadow-glow-medium);
+  }
+  .verdict-card.low {
+    background: var(--risk-low-bg);
+    border: 1px solid var(--risk-low-border);
+    color: var(--risk-low);
+    box-shadow: var(--shadow-glow-low);
+  }
+  .verdict-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Recommendation ──────────────────────────────── */
+  .recommend-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-left: 3px solid var(--text-primary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: 1rem 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    box-shadow: var(--shadow-sm);
+  }
+  .recommend-card strong { color: var(--text-primary); }
+
+  /* ── Matches Table ───────────────────────────────── */
+  .matches-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+  }
+  .matches-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .matches-table thead th {
+    background: var(--bg-subtle);
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-default);
+  }
+  .matches-table tbody td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+  .matches-table tbody tr:last-child td { border-bottom: none; }
+  .matches-table tbody tr:hover { background: var(--bg-input); }
+  .matches-table .rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    width: 50px;
+  }
+  .sim-bar-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sim-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 60px;
+  }
+  .sim-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--text-primary);
+    opacity: 0.7;
+  }
+  .sim-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    min-width: 44px;
+    text-align: right;
+  }
+
+  /* ── Structure Viewer ────────────────────────────── */
+  .viewer-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+  }
+  .viewer-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .viewer-toggle-group {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .viewer-toggle {
+    padding: 5px 14px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+  }
+  .viewer-toggle.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .viewer-placeholder {
+    height: 420px;
+    background: linear-gradient(135deg, #f0efec 0%, #e8e6e0 50%, #f0efec 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .viewer-placeholder::before {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 2px solid var(--border-default);
+    border-radius: 50%;
+    animation: rotate-ring 20s linear infinite;
+    opacity: 0.4;
+  }
+  .viewer-placeholder::after {
+    content: '';
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border: 1px dashed var(--border-default);
+    border-radius: 50%;
+    animation: rotate-ring 15s linear infinite reverse;
+    opacity: 0.3;
+  }
+  @keyframes rotate-ring {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .viewer-placeholder-text {
+    position: relative;
+    z-index: 1;
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+  }
+  .viewer-placeholder-icon {
+    position: relative;
+    z-index: 1;
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.4;
+  }
+  .viewer-legend {
+    display: flex;
+    gap: 1rem;
+    padding: 0.6rem 1.25rem;
+    border-top: 1px solid var(--border-light);
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+
+  /* ── Function Cards ──────────────────────────────── */
+  .func-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .func-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s;
+  }
+  .func-card:hover { box-shadow: var(--shadow-md); }
+  .func-card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+  }
+  .func-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-subtle);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .func-name {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .func-bar {
+    height: 4px;
+    background: var(--bg-subtle);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 0.4rem;
+  }
+  .func-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--text-primary);
+    opacity: 0.6;
+  }
+
+  /* ── Evidence / Explain ──────────────────────────── */
+  .evidence-section {
+    margin-bottom: 1.5rem;
+  }
+  .evidence-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 0.75rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .evidence-block-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  .evidence-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .evidence-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .evidence-text {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* ── Footer ──────────────────────────────────────── */
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Divider label ───────────────────────────────── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0 1.5rem;
+  }
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+  }
+  .section-divider span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Animations ──────────────────────────────────── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in {
+    animation: fadeInUp 0.4s ease-out both;
+  }
+  .delay-1 { animation-delay: 0.05s; }
+  .delay-2 { animation-delay: 0.1s; }
+  .delay-3 { animation-delay: 0.15s; }
+  .delay-4 { animation-delay: 0.2s; }
+  .delay-5 { animation-delay: 0.25s; }
+  .delay-6 { animation-delay: 0.3s; }
+
+  /* ── Copy / Video buttons ────────────────────────── */
+  .bottom-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+  .btn-secondary {
+    padding: 0.55rem 1.1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: var(--border-focus);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary {
+    padding: 0.55rem 1.1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--text-primary);
+    color: var(--text-inverse);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    background: #333;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ── Error banner ────────────────────────────────── */
+  .error-banner {
+    background: var(--risk-high-bg);
+    border: 1px solid var(--risk-high-border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1.25rem;
+    color: var(--risk-high);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .error-banner.visible { display: block; }
+
+  /* ── Results section (hidden until first run) ────── */
+  #results-section { display: none; }
+  #results-section.visible { display: block; }
+
+  /* ── Function tab loading state ──────────────────── */
+  .func-loading {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+  }
+  .func-loading .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-default);
+    border-top-color: var(--text-secondary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="header animate-in">
+    <div style="display:flex; flex-direction:column; gap:0.25rem;">
+      <div class="header-left">
+        <span class="logo">BioScreen<span class="logo-dot"></span></span>
+        <span class="api-badge status-pill checking">
+          <span class="status-dot"></span>
+          Connecting...
+        </span>
+      </div>
+      <span class="tagline">Structure-based biosecurity screening for AI-designed proteins</span>
+    </div>
+    <nav class="nav-goto-group">
+      <a class="nav-goto" href="#single-screen">Single Screen <span class="arrow">&#8594;</span></a>
+      <a class="nav-goto" href="#session-analysis">Session Analysis <span class="arrow">&#8594;</span></a>
+    </nav>
+  </header>
+
+  <!-- ═══ INPUT ═══ -->
+  <section class="input-section animate-in delay-1" id="single-screen">
+    <div class="input-section-label">Sequence Input</div>
+    <div class="input-grid">
+      <div>
+        <textarea class="seq-textarea" placeholder="Paste protein sequence here (FASTA headers auto-stripped)..."></textarea>
+        <div id="seq-len-display" class="seq-len-caption">0 amino acids</div>
+        <div style="margin-top:0.5rem;">
+          <input class="text-input" placeholder="Sequence ID (optional)" style="width:100%;" value="">
+        </div>
+      </div>
+      <div class="controls-stack">
+        <div class="select-wrap">
+          <select class="select-input">
+            <option value="">-- Select a demo sequence --</option>
+            <option value="MNYLIMFSLALLLVIGVESGRDGYIVDSKNCTYFCGRNAYCNEECTKLKGESGYCQWASPYGNACYCYKLPDHVRTKGPGRCH">Scorpion toxin Aah4 (HIGH — known toxin, 84aa)</option>
+            <option value="MKTLLLAVAVVAFVCLGSADQLGLGRQQIDWGQGQAVGPPYTLCFECNRMTSSDCSTALRCYRGSCYTLYRPDENCELKWAVKGCAETCPTAGPNERVKCCRSPRCNDD">Irditoxin snake venom (HIGH — in DB, 109aa)</option>
+            <option value="ACVNDDYRSYYCVRKYMECGAEKSVGCWEYKAYQSCYCRQFAYKGEEGRPCVCRDFDGGQALKLHAGKEDSFH">Spider toxin Beta-diguetoxin (HIGH — structural match, 74aa)</option>
+            <option value="APGRWRCEVWWSAGRCGNQPDAQMYPEKKKQCESPPLSECHKQWNRFDTEYECTSGCWY">AI-redesigned snake venom (MEDIUM — 39% identity, BLAST misses)</option>
+            <option value="AAEAAAAEAAAAAAAAAAEAGTAAAPAPPPAAPAAPAPPPITYCYVCNRSLSSDCSTCQPCINGVCYIRYEKNANGEMVPVERGCSATCPTPGPNEKVICCTSDCCNSE">AI-redesigned irditoxin (MEDIUM — 23% identity, BLAST misses)</option>
+            <option value="KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQINSRYWCNDGKTPGAVNACHLSCSALLQDNIADAVACAKRVVRDPQGIRAWVAWRNRCQNRDVRQYVQGCGV">Human lysozyme (LOW — benign enzyme, 130aa)</option>
+            <option value="MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTFSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK">GFP (LOW — jellyfish fluorescent protein, 238aa)</option>
+            <option value="FVNQHLCGSHLVEALYLVCGERGFFYTPKT">Human insulin B chain (LOW — essential hormone, 30aa)</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <span class="topk-label">Top K</span>
+          <input class="topk-input" type="number" value="5" min="1" max="50">
+        </div>
+        <div style="flex:1;"></div>
+        <button class="btn-screen">Screen Sequence</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Error banner -->
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- ═══ RESULTS ═══ -->
+  <div id="results-section">
+
+    <!-- Tab bar -->
+    <div class="tab-bar animate-in delay-2">
+      <button class="tab-item active" onclick="showTab(this, 'overview')">Overview</button>
+      <button class="tab-item" onclick="showTab(this, 'matches')">Matches</button>
+      <button class="tab-item" onclick="showTab(this, 'structure')">Structure</button>
+      <button class="tab-item" onclick="showTab(this, 'scores')">Score Breakdown</button>
+      <button class="tab-item" onclick="showTab(this, 'function')">Function</button>
+      <button class="tab-item" onclick="showTab(this, 'explain')">Explain</button>
+    </div>
+
+    <!-- ── Overview Tab ── -->
+    <div id="tab-overview" class="tab-content">
+      <div class="cards-row">
+        <div class="summary-card card-risk animate-in delay-3">
+          <div class="card-label">Risk Score</div>
+          <div id="risk-score-value" class="card-value risk-high">—</div>
+          <div class="risk-bar"><div id="risk-bar-fill" class="risk-bar-fill high" style="width:0%"></div></div>
+          <span id="risk-badge" class="risk-badge high">—</span>
+        </div>
+        <div class="summary-card card-match animate-in delay-4">
+          <div class="card-label">Top Match</div>
+          <div id="match-name" class="match-name">—</div>
+          <div id="match-organism" class="match-organism">—</div>
+          <div id="match-score-val" class="match-score">—<span class="match-score-type">embedding</span></div>
+        </div>
+        <div class="summary-card card-mode animate-in delay-5">
+          <div class="card-label">Screening Mode</div>
+          <div class="mode-value">Full Pipeline</div>
+          <div class="mode-badges">
+            <span class="mode-badge">Embedding</span>
+            <span class="mode-badge">Structure</span>
+            <span class="mode-badge">Function</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row: Radar + Score Contributions -->
+      <div class="chart-row animate-in delay-4">
+        <!-- Radar Chart: Multi-axis threat profile (static) -->
+        <div class="chart-container">
+          <div class="chart-title">Threat Profile</div>
+          <svg viewBox="0 0 200 200" style="width:100%;max-width:240px;display:block;margin:0 auto;">
+            <!-- Grid pentagons -->
+            <polygon points="100,30 166,55 153,130 47,130 34,55" fill="none" stroke="#e0ddd6" stroke-width="0.5"/>
+            <polygon points="100,51 147,68 138,113 62,113 53,68" fill="none" stroke="#e0ddd6" stroke-width="0.5"/>
+            <polygon points="100,72 128,82 123,96 77,96 72,82" fill="none" stroke="#e0ddd6" stroke-width="0.5"/>
+            <!-- Axes -->
+            <line x1="100" y1="100" x2="100" y2="30" stroke="#e0ddd6" stroke-width="0.5"/>
+            <line x1="100" y1="100" x2="166" y2="55" stroke="#e0ddd6" stroke-width="0.5"/>
+            <line x1="100" y1="100" x2="153" y2="130" stroke="#e0ddd6" stroke-width="0.5"/>
+            <line x1="100" y1="100" x2="47" y2="130" stroke="#e0ddd6" stroke-width="0.5"/>
+            <line x1="100" y1="100" x2="34" y2="55" stroke="#e0ddd6" stroke-width="0.5"/>
+            <!-- Data polygon (static) -->
+            <polygon id="radar-polygon" points="100,100 100,100 100,100 100,100 100,100" fill="rgba(220,53,69,0.12)" stroke="#dc3545" stroke-width="1.5"/>
+            <!-- Data points -->
+            <circle id="radar-p0" cx="100" cy="100" r="3" fill="#dc3545"/>
+            <circle id="radar-p1" cx="100" cy="100" r="3" fill="#dc3545"/>
+            <circle id="radar-p2" cx="100" cy="100" r="3" fill="#dc3545"/>
+            <circle id="radar-p3" cx="100" cy="100" r="3" fill="#dc3545"/>
+            <circle id="radar-p4" cx="100" cy="100" r="3" fill="#dc3545"/>
+            <!-- Labels -->
+            <text x="100" y="22" text-anchor="middle" class="radar-axis-label">Embedding</text>
+            <text x="176" y="52" text-anchor="start" class="radar-axis-label">Structure</text>
+            <text x="160" y="140" text-anchor="start" class="radar-axis-label">Function</text>
+            <text x="40" y="145" text-anchor="end" class="radar-axis-label">Active Site</text>
+            <text x="24" y="52" text-anchor="end" class="radar-axis-label">Toxin Class</text>
+          </svg>
+        </div>
+
+        <!-- Score Contribution Donut (static shell, updated by JS) -->
+        <div class="chart-container">
+          <div class="chart-title">Score Contributions</div>
+          <svg id="donut-svg" viewBox="0 0 200 160" style="width:100%;max-width:240px;display:block;margin:0 auto;">
+            <circle cx="100" cy="75" r="55" fill="none" stroke="#e0ddd6" stroke-width="22"/>
+            <circle id="donut-func" cx="100" cy="75" r="55" fill="none" stroke="#2a9d5c" stroke-width="22"
+              stroke-dasharray="0 345.6" stroke-dashoffset="0" transform="rotate(-90 100 75)"/>
+            <circle id="donut-struct" cx="100" cy="75" r="55" fill="none" stroke="#d48c0e" stroke-width="22"
+              stroke-dasharray="0 345.6" stroke-dashoffset="0" transform="rotate(-90 100 75)"/>
+            <circle id="donut-emb" cx="100" cy="75" r="55" fill="none" stroke="#dc3545" stroke-width="22"
+              stroke-dasharray="0 345.6" stroke-dashoffset="0" transform="rotate(-90 100 75)"/>
+            <text id="donut-center-val" x="100" y="72" text-anchor="middle" class="gauge-center-text" font-size="18">—</text>
+            <text x="100" y="86" text-anchor="middle" class="gauge-label">total</text>
+          </svg>
+          <div class="chart-legend" id="donut-legend">
+            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#dc3545;"></div><span id="legend-emb">Embedding</span></div>
+            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#d48c0e;"></div><span id="legend-struct">Structure</span></div>
+            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#2a9d5c;"></div><span id="legend-func">Function</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Similarity Comparison Bar Chart -->
+      <div class="chart-container animate-in delay-5">
+        <div class="chart-title">Top Matches — Embedding vs Structure Similarity</div>
+        <svg id="bar-chart-svg" viewBox="0 0 600 200" style="width:100%;display:block;">
+          <!-- Y axis -->
+          <line x1="140" y1="10" x2="140" y2="175" stroke="#e0ddd6" stroke-width="1"/>
+          <!-- Grid lines -->
+          <line x1="140" y1="175" x2="580" y2="175" stroke="#eceae4" stroke-width="0.5"/>
+          <line x1="140" y1="131" x2="580" y2="131" stroke="#eceae4" stroke-width="0.5"/>
+          <line x1="140" y1="87" x2="580" y2="87" stroke="#eceae4" stroke-width="0.5"/>
+          <line x1="140" y1="43" x2="580" y2="43" stroke="#eceae4" stroke-width="0.5"/>
+          <!-- Y labels -->
+          <text x="135" y="178" text-anchor="end" class="hist-label">0.0</text>
+          <text x="135" y="134" text-anchor="end" class="hist-label">0.25</text>
+          <text x="135" y="90" text-anchor="end" class="hist-label">0.50</text>
+          <text x="135" y="46" text-anchor="end" class="hist-label">0.75</text>
+          <text x="135" y="16" text-anchor="end" class="hist-label">1.0</text>
+          <g id="bar-chart-bars"></g>
+        </svg>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#1a1a1a;"></div>Embedding Similarity</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#dc3545;"></div>Structure Similarity</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Matches Tab ── -->
+    <div id="tab-matches" class="tab-content" style="display:none;">
+
+      <!-- Similarity Heatmap (static decorative) -->
+      <div class="chart-container animate-in delay-3">
+        <div class="chart-title">Pairwise Similarity Heatmap (Top 5 vs Query)</div>
+        <svg viewBox="0 0 520 180" style="width:100%;display:block;">
+          <text x="195" y="15" text-anchor="middle" class="hist-label" font-size="9">Query</text>
+          <text x="270" y="15" text-anchor="middle" class="hist-label" font-size="9">Aah4</text>
+          <text x="345" y="15" text-anchor="middle" class="hist-label" font-size="9">BmKM1</text>
+          <text x="420" y="15" text-anchor="middle" class="hist-label" font-size="9">CsE5</text>
+          <text x="495" y="15" text-anchor="middle" class="hist-label" font-size="9">Ts1</text>
+          <text x="155" y="42" text-anchor="end" class="hist-label" font-size="9">Query</text>
+          <rect x="168" y="25" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="195" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+          <rect x="243" y="25" width="55" height="25" rx="3" fill="#c0392b"/><text x="270" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.968</text>
+          <rect x="318" y="25" width="55" height="25" rx="3" fill="#d4553e"/><text x="345" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.941</text>
+          <rect x="393" y="25" width="55" height="25" rx="3" fill="#e06a54"/><text x="420" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.915</text>
+          <rect x="468" y="25" width="55" height="25" rx="3" fill="#e88068"/><text x="495" y="42" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.882</text>
+          <text x="155" y="72" text-anchor="end" class="hist-label" font-size="9">Aah4</text>
+          <rect x="168" y="55" width="55" height="25" rx="3" fill="#c0392b"/><text x="195" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.968</text>
+          <rect x="243" y="55" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="270" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+          <rect x="318" y="55" width="55" height="25" rx="3" fill="#d4553e"/><text x="345" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.952</text>
+          <rect x="393" y="55" width="55" height="25" rx="3" fill="#e06a54"/><text x="420" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.928</text>
+          <rect x="468" y="55" width="55" height="25" rx="3" fill="#e88068"/><text x="495" y="72" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.891</text>
+          <text x="155" y="102" text-anchor="end" class="hist-label" font-size="9">BmKM1</text>
+          <rect x="168" y="85" width="55" height="25" rx="3" fill="#d4553e"/><text x="195" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.941</text>
+          <rect x="243" y="85" width="55" height="25" rx="3" fill="#d4553e"/><text x="270" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.952</text>
+          <rect x="318" y="85" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="345" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+          <rect x="393" y="85" width="55" height="25" rx="3" fill="#d4553e"/><text x="420" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.944</text>
+          <rect x="468" y="85" width="55" height="25" rx="3" fill="#e06a54"/><text x="495" y="102" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.903</text>
+          <text x="155" y="132" text-anchor="end" class="hist-label" font-size="9">CsE5</text>
+          <rect x="168" y="115" width="55" height="25" rx="3" fill="#e06a54"/><text x="195" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.915</text>
+          <rect x="243" y="115" width="55" height="25" rx="3" fill="#e06a54"/><text x="270" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.928</text>
+          <rect x="318" y="115" width="55" height="25" rx="3" fill="#d4553e"/><text x="345" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.944</text>
+          <rect x="393" y="115" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="420" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+          <rect x="468" y="115" width="55" height="25" rx="3" fill="#e88068"/><text x="495" y="132" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.876</text>
+          <text x="155" y="162" text-anchor="end" class="hist-label" font-size="9">Ts1</text>
+          <rect x="168" y="145" width="55" height="25" rx="3" fill="#e88068"/><text x="195" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.882</text>
+          <rect x="243" y="145" width="55" height="25" rx="3" fill="#e88068"/><text x="270" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.891</text>
+          <rect x="318" y="145" width="55" height="25" rx="3" fill="#e06a54"/><text x="345" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.903</text>
+          <rect x="393" y="145" width="55" height="25" rx="3" fill="#e88068"/><text x="420" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">0.876</text>
+          <rect x="468" y="145" width="55" height="25" rx="3" fill="#1a1a1a"/><text x="495" y="162" text-anchor="middle" fill="white" font-size="9" font-family="JetBrains Mono" font-weight="600">1.000</text>
+        </svg>
+      </div>
+
+      <div class="matches-table-wrap animate-in delay-3">
+        <table class="matches-table">
+          <thead>
+            <tr>
+              <th style="width:50px;">#</th>
+              <th>Name</th>
+              <th>Organism</th>
+              <th style="width:120px;">Type</th>
+              <th style="width:180px;">Embedding Sim</th>
+              <th style="width:180px;">Structure Sim</th>
+            </tr>
+          </thead>
+          <tbody id="matches-table-body">
+            <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-tertiary);font-size:0.85rem;">Run a screening to see matches</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Structure Tab ── -->
+    <div id="tab-structure" class="tab-content" style="display:none;">
+      <div class="viewer-card animate-in delay-3">
+        <div class="viewer-toolbar">
+          <div class="viewer-toggle-group" id="style-toggle-group">
+            <button class="viewer-toggle active" data-style="cartoon">Cartoon</button>
+            <button class="viewer-toggle" data-style="surface">Surface</button>
+            <button class="viewer-toggle" data-style="stick">Stick</button>
+          </div>
+          <div class="viewer-toggle-group" id="color-toggle-group">
+            <button class="viewer-toggle active" data-color="Default">Default</button>
+            <button class="viewer-toggle" data-color="pLDDT">pLDDT</button>
+            <button class="viewer-toggle" data-color="Risk Layers">Risk Layers</button>
+          </div>
+        </div>
+        <div id="structure-viewer">
+          <div class="viewer-placeholder">
+            <div class="viewer-placeholder-icon">&#x1F9EC;</div>
+            <div class="viewer-placeholder-text">3D structure will render here after screening</div>
+          </div>
+        </div>
+        <div class="viewer-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#94b8d8;"></div> Query protein</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Active site pocket</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Danger residues</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Score Breakdown Tab ── -->
+    <div id="tab-scores" class="tab-content" style="display:none;">
+      <div class="score-section animate-in delay-3">
+        <div class="section-label" style="margin-bottom:1.25rem;">Component Scores</div>
+
+        <div class="score-row">
+          <span class="score-label">Embedding Similarity</span>
+          <div class="score-track"><div id="score-emb-bar" class="score-fill" style="width:0%"></div></div>
+          <span id="score-emb-num" class="score-num">—</span>
+        </div>
+        <div class="score-row" style="margin-bottom:1.5rem;">
+          <span id="score-emb-meta" class="score-meta">Weight: 0.50 &middot; Contribution: —</span>
+        </div>
+
+        <div class="score-row">
+          <span class="score-label">Structure Similarity</span>
+          <div class="score-track"><div id="score-struct-bar" class="score-fill" style="width:0%"></div></div>
+          <span id="score-struct-num" class="score-num">—</span>
+        </div>
+        <div class="score-row" style="margin-bottom:1.5rem;">
+          <span id="score-struct-meta" class="score-meta">Weight: 0.30 &middot; Contribution: —</span>
+        </div>
+
+        <div class="score-row">
+          <span class="score-label">Function Overlap</span>
+          <div class="score-track"><div id="score-func-bar" class="score-fill" style="width:0%"></div></div>
+          <span id="score-func-num" class="score-num">—</span>
+        </div>
+        <div class="score-row" style="margin-bottom:1rem;">
+          <span id="score-func-meta" class="score-meta">Weight: 0.20 &middot; Contribution: —</span>
+        </div>
+
+        <div class="score-total">
+          <span class="score-total-label">Final Risk Score</span>
+          <span id="score-total-value" class="score-total-value">—</span>
+        </div>
+      </div>
+
+      <!-- Waterfall chart (static) -->
+      <div class="chart-container animate-in delay-4">
+        <div class="chart-title">Score Waterfall — Component Contributions</div>
+        <svg viewBox="0 0 500 200" style="width:100%;display:block;">
+          <line x1="80" y1="170" x2="460" y2="170" stroke="#e0ddd6" stroke-width="0.5"/>
+          <line x1="80" y1="130" x2="460" y2="130" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+          <line x1="80" y1="90" x2="460" y2="90" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+          <line x1="80" y1="50" x2="460" y2="50" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+          <line x1="80" y1="10" x2="460" y2="10" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+          <text x="75" y="173" text-anchor="end" class="hist-label">0.0</text>
+          <text x="75" y="133" text-anchor="end" class="hist-label">0.25</text>
+          <text x="75" y="93" text-anchor="end" class="hist-label">0.50</text>
+          <text x="75" y="53" text-anchor="end" class="hist-label">0.75</text>
+          <text x="75" y="16" text-anchor="end" class="hist-label">1.0</text>
+          <g id="waterfall-bars"></g>
+        </svg>
+      </div>
+
+      <!-- Threshold comparison -->
+      <div class="chart-container animate-in delay-5">
+        <div class="chart-title">Risk Thresholds</div>
+        <svg viewBox="0 0 500 60" style="width:100%;display:block;">
+          <rect x="10" y="15" width="480" height="20" rx="10" fill="#eceae4"/>
+          <rect x="10" y="15" width="144" height="20" rx="10" fill="#2a9d5c" opacity="0.25"/>
+          <rect x="154" y="15" width="120" height="20" fill="#d48c0e" opacity="0.25"/>
+          <rect x="274" y="15" width="216" height="20" rx="10" fill="#dc3545" opacity="0.25"/>
+          <line x1="154" y1="10" x2="154" y2="40" stroke="#d48c0e" stroke-width="2"/>
+          <text x="154" y="52" text-anchor="middle" class="hist-label" fill="#d48c0e" font-weight="600">0.3 Medium</text>
+          <line x1="274" y1="10" x2="274" y2="40" stroke="#dc3545" stroke-width="2"/>
+          <text x="274" y="52" text-anchor="middle" class="hist-label" fill="#dc3545" font-weight="600">0.55 High</text>
+          <circle id="threshold-marker" cx="10" cy="25" r="8" fill="#1a1a1a" stroke="white" stroke-width="2"/>
+          <text id="threshold-label" x="10" y="7" text-anchor="middle" class="hist-value" font-size="11">—</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ── Function Tab ── -->
+    <div id="tab-function" class="tab-content" style="display:none;">
+      <div id="explain-content-function">
+        <div class="func-loading">
+          Run a screening to see function predictions
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Explain Tab ── -->
+    <div id="tab-explain" class="tab-content" style="display:none;">
+      <div id="explain-content">
+        <div class="verdict-card low animate-in delay-3">
+          <span class="verdict-icon">&#x2139;</span>
+          <span>Run a screening to see the explanation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom actions -->
+    <div class="bottom-actions animate-in delay-6">
+      <button class="btn-secondary" id="copy-json-btn">Copy JSON</button>
+    </div>
+
+  </div><!-- end results-section -->
+
+  <!-- Footer -->
+  <footer class="footer">
+    BioScreen — Structure-based biosecurity screening for AI-designed proteins. For research purposes only.
+  </footer>
+
+</div>
+
+<script>
+// ─── Config ────────────────────────────────────────────────────────────────
+const API = 'http://localhost:8000/api';
+const SESSION_ID = crypto.randomUUID();
+
+// ─── Demo sequences ────────────────────────────────────────────────────────
+const DEMO_SEQUENCES = {
+  '': '',
+  'Scorpion toxin Aah4 (HIGH — known toxin, 84aa)': 'MNYLIMFSLALLLVIGVESGRDGYIVDSKNCTYFCGRNAYCNEECTKLKGESGYCQWASPYGNACYCYKLPDHVRTKGPGRCH',
+  'Irditoxin snake venom (HIGH — in DB, 109aa)': 'MKTLLLAVAVVAFVCLGSADQLGLGRQQIDWGQGQAVGPPYTLCFECNRMTSSDCSTALRCYRGSCYTLYRPDENCELKWAVKGCAETCPTAGPNERVKCCRSPRCNDD',
+  'Spider toxin Beta-diguetoxin (HIGH — structural match, 74aa)': 'ACVNDDYRSYYCVRKYMECGAEKSVGCWEYKAYQSCYCRQFAYKGEEGRPCVCRDFDGGQALKLHAGKEDSFH',
+  'AI-redesigned snake venom (MEDIUM — 39% identity, BLAST misses)': 'APGRWRCEVWWSAGRCGNQPDAQMYPEKKKQCESPPLSECHKQWNRFDTEYECTSGCWY',
+  'AI-redesigned irditoxin (MEDIUM — 23% identity, BLAST misses)': 'AAEAAAAEAAAAAAAAAAEAGTAAAPAPPPAAPAAPAPPPITYCYVCNRSLSSDCSTCQPCINGVCYIRYEKNANGEMVPVERGCSATCPTPGPNEKVICCTSDCCNSE',
+  'Human lysozyme (LOW — benign enzyme, 130aa)': 'KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQINSRYWCNDGKTPGAVNACHLSCSALLQDNIADAVACAKRVVRDPQGIRAWVAWRNRCQNRDVRQYVQGCGV',
+  'GFP (LOW — jellyfish fluorescent protein, 238aa)': 'MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTFSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK',
+  'Human insulin B chain (LOW — essential hormone, 30aa)': 'FVNQHLCGSHLVEALYLVCGERGFFYTPKT',
+};
+
+// ─── State ─────────────────────────────────────────────────────────────────
+let lastResult = null;
+let functionPollTimer = null;
+let currentViewStyle = 'cartoon';
+let currentColorMode = 'Default';
+
+// ─── DOM refs ──────────────────────────────────────────────────────────────
+const textarea    = document.querySelector('.seq-textarea');
+const seqIdInput  = document.querySelector('.text-input');
+const demoSelect  = document.querySelector('.select-input');
+const screenBtn   = document.querySelector('.btn-screen');
+const topKInput   = document.querySelector('.topk-input');
+const seqLenEl    = document.getElementById('seq-len-display');
+const errorBanner = document.getElementById('error-banner');
+const apiBadge    = document.querySelector('.api-badge');
+
+// ─── Tab switching ─────────────────────────────────────────────────────────
+function showTab(el, tabId) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  el.classList.add('active');
+  document.getElementById('tab-' + tabId).style.display = 'block';
+}
+
+// ─── Viewer style toggles ──────────────────────────────────────────────────
+document.querySelectorAll('.viewer-toggle-group').forEach(group => {
+  group.querySelectorAll('.viewer-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('.viewer-toggle').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.style) currentViewStyle = btn.dataset.style;
+      if (btn.dataset.color) currentColorMode = btn.dataset.color;
+      if (lastResult && lastResult.pdb_string) {
+        renderStructure(lastResult.pdb_string, lastResult.pocket_residues || [], lastResult.danger_residues || [], lastResult.aligned_regions || []);
+      }
+    });
+  });
+});
+
+// ─── Sequence helpers ──────────────────────────────────────────────────────
+function cleanSeq(raw) {
+  let s = raw.trim();
+  if (s.startsWith('>')) s = s.split('\n').slice(1).join('');
+  return s.replace(/\s/g, '');
+}
+
+function updateSeqLen() {
+  const n = cleanSeq(textarea.value).length;
+  seqLenEl.textContent = n === 0 ? '0 amino acids' : `${n} amino acid${n === 1 ? '' : 's'}`;
+}
+
+textarea.addEventListener('input', updateSeqLen);
+
+// Demo select fills textarea
+demoSelect.addEventListener('change', () => {
+  const val = demoSelect.value;
+  textarea.value = val;
+  updateSeqLen();
+});
+
+// ─── API health check ──────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API}/health`);
+    const d = await r.json();
+    if (d.status === 'ok') {
+      apiBadge.className = 'api-badge status-pill';
+      apiBadge.innerHTML = '<span class="status-dot"></span>API Connected';
+    } else {
+      apiBadge.className = 'api-badge status-pill checking';
+      apiBadge.innerHTML = '<span class="status-dot"></span>API Degraded';
+    }
+  } catch {
+    apiBadge.className = 'api-badge status-pill disconnected';
+    apiBadge.innerHTML = '<span class="status-dot"></span>API Offline';
+  }
+}
+
+// ─── Error helpers ─────────────────────────────────────────────────────────
+function showError(msg) {
+  errorBanner.textContent = msg;
+  errorBanner.classList.add('visible');
+}
+function clearError() {
+  errorBanner.classList.remove('visible');
+}
+
+// ─── Main screen handler ───────────────────────────────────────────────────
+screenBtn.addEventListener('click', async () => {
+  const seq = cleanSeq(textarea.value);
+  if (!seq) {
+    showError('Please enter or paste a protein sequence before screening.');
+    return;
+  }
+  clearError();
+  screenBtn.disabled = true;
+  screenBtn.textContent = 'Analyzing...';
+
+  try {
+    const resp = await fetch(`${API}/screen`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Session-Id': SESSION_ID,
+      },
+      body: JSON.stringify({
+        sequence: seq,
+        sequence_id: seqIdInput.value.trim() || null,
+        top_k: parseInt(topKInput.value) || 5,
+      }),
+    });
+
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      throw new Error(`Server returned ${resp.status}: ${errBody}`);
+    }
+
+    const data = await resp.json();
+    lastResult = data;
+    renderResults(data);
+
+    // Show results section
+    document.getElementById('results-section').classList.add('visible');
+
+    // Reset to overview tab
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.querySelector('.tab-item').classList.add('active');
+    document.getElementById('tab-overview').style.display = 'block';
+
+    // Start polling function tab
+    if (functionPollTimer) clearInterval(functionPollTimer);
+    startFunctionPoll(data.sequence_id);
+
+  } catch (err) {
+    showError('Screening failed: ' + err.message);
+    console.error(err);
+  } finally {
+    screenBtn.disabled = false;
+    screenBtn.textContent = 'Screen Sequence';
+  }
+});
+
+// ─── Render results ────────────────────────────────────────────────────────
+function renderResults(data) {
+  const riskScore  = data.risk_score ?? 0;
+  const riskLevel  = (data.risk_level ?? 'UNKNOWN').toLowerCase();
+  const topMatch   = (data.top_matches || [])[0] || null;
+
+  // --- Overview cards ---
+  const scoreEl = document.getElementById('risk-score-value');
+  scoreEl.textContent = riskScore.toFixed(3);
+  scoreEl.className = `card-value risk-${riskLevel}`;
+
+  const barFill = document.getElementById('risk-bar-fill');
+  barFill.style.width = (riskScore * 100).toFixed(1) + '%';
+  barFill.className = `risk-bar-fill ${riskLevel}`;
+
+  const badge = document.getElementById('risk-badge');
+  badge.textContent = (data.risk_level ?? 'UNKNOWN');
+  badge.className = `risk-badge ${riskLevel}`;
+
+  if (topMatch) {
+    document.getElementById('match-name').textContent = topMatch.name || '—';
+    document.getElementById('match-organism').textContent = topMatch.organism || '—';
+    const scoreType = topMatch.structure_similarity != null ? 'structure' : 'embedding';
+    const scoreNum  = topMatch.structure_similarity ?? topMatch.embedding_similarity ?? 0;
+    document.getElementById('match-score-val').innerHTML =
+      scoreNum.toFixed(3) + `<span class="match-score-type">${scoreType}</span>`;
+  }
+
+  // --- Donut chart ---
+  const rf = data.risk_factors || {};
+  const embSim    = rf.embedding_similarity ?? (topMatch ? topMatch.embedding_similarity : 0) ?? 0;
+  const structSim = rf.structure_similarity ?? (topMatch ? (topMatch.structure_similarity ?? 0) : 0);
+  const funcSim   = rf.function_similarity ?? rf.function_overlap ?? 0;
+
+  const embContrib    = embSim    * 0.50;
+  const structContrib = structSim * 0.30;
+  const funcContrib   = funcSim   * 0.20;
+  const circumference = 2 * Math.PI * 55; // ~345.58
+
+  const funcArc    = funcContrib    / 1.0 * circumference;
+  const structArc  = structContrib  / 1.0 * circumference;
+  const embArc     = embContrib     / 1.0 * circumference;
+
+  document.getElementById('donut-func').setAttribute('stroke-dasharray',   `${funcArc.toFixed(1)} ${(circumference - funcArc).toFixed(1)}`);
+  document.getElementById('donut-func').setAttribute('stroke-dashoffset',  '0');
+
+  document.getElementById('donut-struct').setAttribute('stroke-dasharray',  `${structArc.toFixed(1)} ${(circumference - structArc).toFixed(1)}`);
+  document.getElementById('donut-struct').setAttribute('stroke-dashoffset', `-${funcArc.toFixed(1)}`);
+
+  document.getElementById('donut-emb').setAttribute('stroke-dasharray',    `${embArc.toFixed(1)} ${(circumference - embArc).toFixed(1)}`);
+  document.getElementById('donut-emb').setAttribute('stroke-dashoffset',   `-${(funcArc + structArc).toFixed(1)}`);
+
+  document.getElementById('donut-center-val').textContent = riskScore.toFixed(3);
+  document.getElementById('legend-emb').textContent    = `Embedding (${embContrib.toFixed(3)})`;
+  document.getElementById('legend-struct').textContent = `Structure (${structContrib.toFixed(3)})`;
+  document.getElementById('legend-func').textContent   = `Function (${funcContrib.toFixed(3)})`;
+
+  // --- Radar (update approximate points based on scores) ---
+  updateRadar(embSim, structSim, funcSim, riskScore);
+
+  // --- Bar chart (top matches) ---
+  renderBarChart(data.top_matches || []);
+
+  // --- Matches table ---
+  renderMatchesTable(data.top_matches || []);
+
+  // --- Structure ---
+  if (data.pdb_string) {
+    renderStructure(data.pdb_string, data.pocket_residues || [], data.danger_residues || [], data.aligned_regions || []);
+  }
+
+  // --- Score breakdown tab ---
+  renderScoreBreakdown(embSim, structSim, funcSim, riskScore, embContrib, structContrib, funcContrib);
+
+  // --- Explain tab ---
+  renderExplain(data, embSim, structSim, funcSim, riskLevel);
+
+  // --- Function tab initial state ---
+  renderFunctionLoading();
+  if (data.function_prediction) {
+    renderFunction(data.function_prediction);
+  }
+}
+
+// ─── Radar chart update ────────────────────────────────────────────────────
+function updateRadar(emb, struct, func, total) {
+  // Axes: top=Embedding, right=Structure, bottom-right=Function, bottom-left=ActiveSite, left=ToxinClass
+  // Approximate active site / toxin class from total score
+  const activeSite  = Math.min(total * 1.1, 1.0);
+  const toxinClass  = Math.min(total * 0.95, 1.0);
+
+  // Map [0,1] values to SVG coords for each axis
+  // Center: 100,100. Each axis outer point at scale=1:
+  const axisOuter = [
+    [100, 30],    // Embedding (top)
+    [166, 55],    // Structure (top-right)
+    [153, 130],   // Function (bottom-right)
+    [47, 130],    // Active Site (bottom-left)
+    [34, 55],     // Toxin Class (top-left)
+  ];
+  const cx = 100, cy = 100;
+  const values = [emb, struct, func, activeSite, toxinClass];
+
+  const pts = axisOuter.map(([ax, ay], i) => {
+    const v = values[i];
+    const px = cx + (ax - cx) * v;
+    const py = cy + (ay - cy) * v;
+    return [px, py];
+  });
+
+  document.getElementById('radar-polygon').setAttribute('points', pts.map(p => p.join(',')).join(' '));
+  pts.forEach(([px, py], i) => {
+    const el = document.getElementById(`radar-p${i}`);
+    if (el) { el.setAttribute('cx', px.toFixed(1)); el.setAttribute('cy', py.toFixed(1)); }
+  });
+}
+
+// ─── Bar chart (top matches) ───────────────────────────────────────────────
+function renderBarChart(matches) {
+  const g = document.getElementById('bar-chart-bars');
+  g.innerHTML = '';
+  const slots = Math.min(matches.length, 5);
+  if (slots === 0) return;
+
+  const groupW  = Math.floor((580 - 140) / slots);
+  const barW    = Math.min(30, Math.floor(groupW * 0.35));
+  const gap     = 4;
+  const maxH    = 165; // px for value=1.0, baseline y=175
+
+  matches.slice(0, 5).forEach((m, i) => {
+    const gx = 140 + i * groupW + Math.floor((groupW - 2 * barW - gap) / 2);
+    const embVal   = m.embedding_similarity ?? 0;
+    const structVal = m.structure_similarity ?? 0;
+
+    const embH    = embVal    * maxH;
+    const structH = structVal * maxH;
+
+    const shortName = (m.name || '').split(' ').slice(-1)[0].substring(0, 6);
+
+    // Embedding bar
+    const r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    r1.setAttribute('x',       gx);
+    r1.setAttribute('y',       (175 - embH).toFixed(1));
+    r1.setAttribute('width',   barW);
+    r1.setAttribute('height',  embH.toFixed(1));
+    r1.setAttribute('rx', '3');
+    r1.setAttribute('fill', '#1a1a1a');
+    r1.setAttribute('opacity', '0.85');
+    g.appendChild(r1);
+
+    // Structure bar
+    const r2 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    r2.setAttribute('x',       gx + barW + gap);
+    r2.setAttribute('y',       (175 - structH).toFixed(1));
+    r2.setAttribute('width',   barW);
+    r2.setAttribute('height',  structH.toFixed(1));
+    r2.setAttribute('rx', '3');
+    r2.setAttribute('fill', '#dc3545');
+    r2.setAttribute('opacity', '0.7');
+    g.appendChild(r2);
+
+    // Label
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x',           (gx + barW + gap / 2).toFixed(0));
+    t.setAttribute('y',           '195');
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('class',       'hist-label');
+    t.textContent = shortName;
+    g.appendChild(t);
+  });
+}
+
+// ─── Matches table ─────────────────────────────────────────────────────────
+function renderMatchesTable(matches) {
+  const tbody = document.getElementById('matches-table-body');
+  if (!matches.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-tertiary);font-size:0.85rem;">No matches found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = matches.map((m, i) => {
+    const embVal    = m.embedding_similarity ?? 0;
+    const structVal = m.structure_similarity;
+    const structCell = structVal != null
+      ? `<div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:${(structVal * 100).toFixed(1)}%"></div></div><span class="sim-num">${structVal.toFixed(3)}</span></div>`
+      : '<span style="color:var(--text-tertiary);font-size:0.78rem;">—</span>';
+
+    return `<tr>
+      <td class="rank">${i + 1}</td>
+      <td><strong>${escHtml(m.name || m.uniprot_id)}</strong></td>
+      <td>${escHtml(m.organism || '—')}</td>
+      <td>${escHtml(m.toxin_type || '—')}</td>
+      <td><div class="sim-bar-cell"><div class="sim-bar"><div class="sim-bar-fill" style="width:${(embVal * 100).toFixed(1)}%"></div></div><span class="sim-num">${embVal.toFixed(3)}</span></div></td>
+      <td>${structCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Structure viewer ──────────────────────────────────────────────────────
+function renderStructure(pdbString, pocketRes, dangerRes, alignedRegions) {
+  const container = document.getElementById('structure-viewer');
+
+  // Expand aligned regions [start,end] into flat list
+  const alignedRes = [];
+  (alignedRegions || []).forEach(([s, e]) => {
+    for (let r = s; r <= e; r++) alignedRes.push(r);
+  });
+
+  // Build 3Dmol HTML as a blob URL so we avoid inline script CSP issues
+  const pdbJson     = JSON.stringify(pdbString);
+  const pocketJson  = JSON.stringify(pocketRes);
+  const dangerJson  = JSON.stringify(dangerRes);
+  const alignedJson = JSON.stringify(alignedRes);
+  const repJson     = JSON.stringify(currentViewStyle);
+  const modeJson    = JSON.stringify(currentColorMode);
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>body{margin:0;padding:0;background:#f8f7f4;}#viewer{width:100%;height:420px;position:relative;}</style>
+</head><body>
+<div id="viewer"></div>
+<script src="https://3dmol.org/build/3Dmol-min.js"><\/script>
+<script>
+(function(){
+  var pdbData    = ${pdbJson};
+  var pocketRes  = ${pocketJson};
+  var dangerRes  = ${dangerJson};
+  var alignedRes = ${alignedJson};
+  var rep        = ${repJson};
+  var colorMode  = ${modeJson};
+
+  var viewer = $3Dmol.createViewer("viewer", {backgroundColor: "#f8f7f4"});
+  viewer.addModel(pdbData, "pdb");
+
+  if (colorMode === "Risk Layers") {
+    var baseStyle = {}; baseStyle[rep] = {color: "#b0b0b0"};
+    viewer.setStyle({model:0}, baseStyle);
+    if (alignedRes.length > 0) {
+      var aStyle = {}; aStyle[rep] = {color: "#fbbf24"};
+      viewer.addStyle({model:0, resi: alignedRes}, aStyle);
+    }
+  } else if (colorMode === "pLDDT") {
+    if (rep === "cartoon") {
+      viewer.setStyle({model:0}, {cartoon:{colorscheme:{prop:"b",gradient:"roygb",min:50,max:100}}});
+    } else {
+      var s = {}; s[rep] = {colorscheme:{prop:"b",gradient:"roygb",min:50,max:100}};
+      viewer.setStyle({model:0}, s);
+    }
+  } else {
+    if (rep === "surface") {
+      viewer.setStyle({model:0}, {cartoon:{color:"lightblue",opacity:0.5}});
+      viewer.addSurface($3Dmol.SurfaceType.VDW, {opacity:0.7,color:"lightblue"}, {model:0});
+    } else {
+      var s = {}; s[rep] = {color:"lightblue"};
+      viewer.setStyle({model:0}, s);
+    }
+  }
+
+  if (pocketRes.length > 0) {
+    viewer.addStyle({model:0, resi:pocketRes}, {stick:{color:"orange",radius:0.2}});
+  }
+  if (dangerRes.length > 0) {
+    viewer.addStyle({model:0, resi:dangerRes}, {stick:{color:"red",radius:0.3}});
+    viewer.addSurface($3Dmol.SurfaceType.VDW, {opacity:0.3,color:"red"}, {model:0,resi:dangerRes});
+  }
+
+  viewer.zoomTo();
+  viewer.render();
+})();
+<\/script>
+</body></html>`;
+
+  const blob = new Blob([html], {type: 'text/html'});
+  const url  = URL.createObjectURL(blob);
+
+  container.innerHTML = `<iframe src="${url}" style="width:100%;height:420px;border:none;display:block;" sandbox="allow-scripts allow-same-origin"></iframe>`;
+}
+
+// ─── Score breakdown tab ───────────────────────────────────────────────────
+function renderScoreBreakdown(emb, struct, func, total, embC, structC, funcC) {
+  document.getElementById('score-emb-bar').style.width    = (emb * 100).toFixed(1) + '%';
+  document.getElementById('score-emb-num').textContent    = emb.toFixed(3);
+  document.getElementById('score-emb-meta').innerHTML     = `Weight: 0.50 &middot; Contribution: ${embC.toFixed(3)}`;
+
+  document.getElementById('score-struct-bar').style.width = (struct * 100).toFixed(1) + '%';
+  document.getElementById('score-struct-num').textContent = struct.toFixed(3);
+  document.getElementById('score-struct-meta').innerHTML  = `Weight: 0.30 &middot; Contribution: ${structC.toFixed(3)}`;
+
+  document.getElementById('score-func-bar').style.width   = (func * 100).toFixed(1) + '%';
+  document.getElementById('score-func-num').textContent   = func.toFixed(3);
+  document.getElementById('score-func-meta').innerHTML    = `Weight: 0.20 &middot; Contribution: ${funcC.toFixed(3)}`;
+
+  const totalEl = document.getElementById('score-total-value');
+  totalEl.textContent = total.toFixed(3);
+  totalEl.className = 'score-total-value risk-' + (lastResult ? lastResult.risk_level.toLowerCase() : 'low');
+
+  // Waterfall chart
+  renderWaterfall(embC, structC, funcC, total);
+
+  // Threshold marker (x maps 0..1 to 10..490 px in viewBox 0..500)
+  const markerX = 10 + total * 480;
+  document.getElementById('threshold-marker').setAttribute('cx', markerX.toFixed(1));
+  document.getElementById('threshold-label').setAttribute('x', markerX.toFixed(1));
+  document.getElementById('threshold-label').textContent = total.toFixed(3);
+
+  // Color the marker by risk
+  const riskColors = {high: '#dc3545', medium: '#d48c0e', low: '#2a9d5c'};
+  const level = lastResult ? lastResult.risk_level.toLowerCase() : 'low';
+  document.getElementById('threshold-marker').setAttribute('fill', riskColors[level] || '#1a1a1a');
+  document.getElementById('threshold-label').setAttribute('fill', riskColors[level] || '#1a1a1a');
+}
+
+function renderWaterfall(embC, structC, funcC, total) {
+  const g = document.getElementById('waterfall-bars');
+  g.innerHTML = '';
+  const maxH = 160; // px for value 1.0, baseline y=170
+
+  // Bar 1: Embedding contribution from 0
+  const h1 = embC * maxH;
+  addWaterfallBar(g, 110, 70, 170 - h1, h1, '#1a1a1a', '+' + embC.toFixed(3), 'Embedding');
+
+  // Connector
+  addWaterfallLine(g, 180, 170 - h1, 210, 170 - h1);
+
+  // Bar 2: Structure contribution from embC
+  const h2 = structC * maxH;
+  addWaterfallBar(g, 210, 70, 170 - h1 - h2, h2, '#444', '+' + structC.toFixed(3), 'Structure');
+
+  addWaterfallLine(g, 280, 170 - h1 - h2, 310, 170 - h1 - h2);
+
+  // Bar 3: Function contribution from embC+structC
+  const h3 = funcC * maxH;
+  addWaterfallBar(g, 310, 70, 170 - h1 - h2 - h3, h3, '#9c9690', '+' + funcC.toFixed(3), 'Function');
+
+  addWaterfallLine(g, 380, 170 - h1 - h2 - h3, 410, 170 - h1 - h2 - h3);
+
+  // Bar 4: Total
+  const hT = total * maxH;
+  const riskColors = {high: '#dc3545', medium: '#d48c0e', low: '#2a9d5c'};
+  const level = lastResult ? lastResult.risk_level.toLowerCase() : 'low';
+  addWaterfallBar(g, 410, 50, 170 - hT, hT, riskColors[level] || '#dc3545', total.toFixed(3), 'Total', 13, riskColors[level] || '#dc3545');
+}
+
+function addWaterfallBar(g, x, w, y, h, fill, valLabel, nameLabel, fontSize, valColor) {
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y.toFixed(1));
+  rect.setAttribute('width', w); rect.setAttribute('height', Math.max(h, 2).toFixed(1));
+  rect.setAttribute('rx', '4'); rect.setAttribute('fill', fill); rect.setAttribute('opacity', '0.85');
+  g.appendChild(rect);
+
+  const valT = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  valT.setAttribute('x', (x + w / 2).toFixed(0)); valT.setAttribute('y', (y - 5).toFixed(1));
+  valT.setAttribute('text-anchor', 'middle'); valT.setAttribute('class', 'hist-value');
+  valT.setAttribute('font-size', fontSize || 11);
+  if (valColor) valT.setAttribute('fill', valColor);
+  valT.textContent = valLabel;
+  g.appendChild(valT);
+
+  const nameT = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  nameT.setAttribute('x', (x + w / 2).toFixed(0)); nameT.setAttribute('y', '190');
+  nameT.setAttribute('text-anchor', 'middle'); nameT.setAttribute('class', 'hist-label');
+  nameT.textContent = nameLabel;
+  g.appendChild(nameT);
+}
+
+function addWaterfallLine(g, x1, y1, x2, y2) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', x1); line.setAttribute('y1', y1.toFixed(1));
+  line.setAttribute('x2', x2); line.setAttribute('y2', y1.toFixed(1));
+  line.setAttribute('stroke', '#e0ddd6'); line.setAttribute('stroke-width', '1');
+  line.setAttribute('stroke-dasharray', '3');
+  g.appendChild(line);
+}
+
+// ─── Function tab ──────────────────────────────────────────────────────────
+function renderFunctionLoading() {
+  const el = document.getElementById('explain-content-function');
+  el.innerHTML = `<div class="func-loading"><span class="spinner"></span>Fetching from InterPro... this may take a moment.</div>`;
+}
+
+function renderFunction(fp) {
+  const el = document.getElementById('explain-content-function');
+  if (!fp) {
+    el.innerHTML = '<div class="func-loading">No function prediction available.</div>';
+    return;
+  }
+
+  const goTerms  = fp.go_terms  || [];
+  const ecNumbers = fp.ec_numbers || [];
+
+  let html = '';
+
+  if (goTerms.length) {
+    html += '<div class="section-label animate-in delay-3">GO Terms</div>';
+    html += '<div class="func-grid animate-in delay-3">';
+    goTerms.slice(0, 8).forEach(gt => {
+      const id    = gt.id || gt.go_id || '';
+      const name  = gt.name || gt.term || '';
+      const score = parseFloat(gt.score || gt.confidence || 0);
+      html += `<div class="func-card">
+        <div class="func-card-header">
+          <span class="func-id">${escHtml(id)}</span>
+          <span class="func-name">${escHtml(name)}</span>
+        </div>
+        <div class="func-bar"><div class="func-bar-fill" style="width:${(score * 100).toFixed(0)}%"></div></div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (ecNumbers.length) {
+    html += '<div class="section-label" style="margin-top:1.5rem;">EC Numbers</div>';
+    html += '<div class="func-grid animate-in delay-4">';
+    ecNumbers.slice(0, 4).forEach(ec => {
+      const id    = ec.id || ec.ec_number || '';
+      const name  = ec.name || ec.description || '';
+      const score = parseFloat(ec.score || ec.confidence || 0);
+      html += `<div class="func-card">
+        <div class="func-card-header">
+          <span class="func-id">${escHtml(id)}</span>
+          <span class="func-name">${escHtml(name)}</span>
+        </div>
+        <div class="func-bar"><div class="func-bar-fill" style="width:${(score * 100).toFixed(0)}%"></div></div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (fp.summary) {
+    html += `<div class="chart-container animate-in delay-5" style="margin-top:1rem;">
+      <div class="chart-title">Function Summary</div>
+      <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7;">${escHtml(fp.summary)}</p>
+    </div>`;
+  }
+
+  if (!html) {
+    html = '<div class="func-loading">No function annotations returned.</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// ─── Poll function endpoint ────────────────────────────────────────────────
+function startFunctionPoll(seqId) {
+  if (!seqId) return;
+  let attempts = 0;
+  const maxAttempts = 24; // 2 min total
+
+  functionPollTimer = setInterval(async () => {
+    attempts++;
+    try {
+      const r = await fetch(`${API}/function/${encodeURIComponent(seqId)}`);
+      if (r.ok) {
+        const fp = await r.json();
+        if (fp && (fp.go_terms?.length || fp.ec_numbers?.length)) {
+          renderFunction(fp);
+          clearInterval(functionPollTimer);
+          return;
+        }
+      }
+    } catch { /* ignore */ }
+
+    if (attempts >= maxAttempts) {
+      clearInterval(functionPollTimer);
+      // Use function_prediction from last result if available
+      if (lastResult && lastResult.function_prediction) {
+        renderFunction(lastResult.function_prediction);
+      } else {
+        document.getElementById('explain-content-function').innerHTML =
+          '<div class="func-loading">Function prediction timed out or unavailable.</div>';
+      }
+    }
+  }, 5000);
+}
+
+// ─── Explain tab ───────────────────────────────────────────────────────────
+function renderExplain(data, embSim, structSim, funcSim, riskLevel) {
+  const riskIcons   = { high: '&#x26A0;', medium: '&#x26A0;', low: '&#x2705;' };
+  const riskMessages = {
+    high:    'HIGH RISK — Strong similarity to known toxins detected across multiple evidence lines',
+    medium:  'MEDIUM RISK — Moderate similarity to known toxins detected',
+    low:     'LOW RISK — No significant similarity to known toxins detected',
+    unknown: 'UNKNOWN — Could not determine risk level',
+  };
+  const recommendations = {
+    high:    'Immediate review by a biosafety expert is strongly recommended. This protein should not proceed to synthesis or experimental work without thorough manual evaluation. Consider additional wet-lab validation (e.g., functional assays) to confirm or rule out toxin-like activity.',
+    medium:  'Manual review by a trained biosafety professional is recommended before proceeding. While similarity levels are moderate, the structural fold overlap warrants careful consideration. Additional functional annotation may clarify the risk.',
+    low:     'No significant toxin-like features detected. Standard biosafety protocols apply. Proceed with normal review workflows.',
+    unknown: 'Unable to determine risk. Manual review recommended.',
+  };
+
+  const lev = riskLevel || 'unknown';
+  const icon = riskIcons[lev] || '&#x2139;';
+  const msg  = riskMessages[lev] || riskMessages.unknown;
+  const rec  = recommendations[lev] || recommendations.unknown;
+
+  const topMatch = (data.top_matches || [])[0];
+  const structVal = topMatch?.structure_similarity;
+  const embColor  = embSim >= 0.7 ? 'var(--risk-high)' : embSim >= 0.4 ? 'var(--risk-medium)' : 'var(--risk-low)';
+  const structColor = (structVal ?? 0) >= 0.7 ? 'var(--risk-high)' : (structVal ?? 0) >= 0.4 ? 'var(--risk-medium)' : 'var(--risk-low)';
+
+  document.getElementById('explain-content').innerHTML = `
+    <div class="verdict-card ${lev} animate-in delay-3">
+      <span class="verdict-icon">${icon}</span>
+      <span>${escHtml(msg)}</span>
+    </div>
+    <div class="evidence-section">
+      <div class="evidence-block animate-in delay-4">
+        <div class="evidence-block-header">
+          <span class="evidence-label">Sequence Embedding Similarity</span>
+          <span class="evidence-value" style="color:${embColor};">${embSim.toFixed(3)}</span>
+        </div>
+        <p class="evidence-text">The ESM-2 protein language model found ${embSim >= 0.7 ? 'very high' : embSim >= 0.4 ? 'moderate' : 'low'} similarity between this protein's learned representation and those of known toxins. A score of ${embSim.toFixed(3)} indicates the model places this sequence ${embSim >= 0.7 ? 'in nearly the same region of protein embedding space as established dangerous proteins' : embSim >= 0.4 ? 'in a region with partial overlap with known toxins' : 'in a region distinct from known dangerous proteins'}.</p>
+      </div>
+      <div class="evidence-block animate-in delay-5">
+        <div class="evidence-block-header">
+          <span class="evidence-label">Structural Similarity</span>
+          <span class="evidence-value" style="color:${structColor};">${structVal != null ? structVal.toFixed(3) : '—'}</span>
+        </div>
+        <p class="evidence-text">${structVal != null ? `Foldseek structural alignment found ${structVal >= 0.7 ? 'very high' : structVal >= 0.4 ? 'moderate' : 'low'} 3D fold similarity (TM-score ${structVal.toFixed(3)}) between the predicted structure and the top toxin match. Structure determines function — two proteins with the same fold can have similar biological activity regardless of sequence differences.` : 'Structure similarity data was not available for this screening run (ESMFold may not have been called or Foldseek alignment was skipped).'}</p>
+      </div>
+      <div class="evidence-block animate-in delay-6">
+        <div class="evidence-block-header">
+          <span class="evidence-label">Function Overlap</span>
+          <span class="evidence-value" style="color:var(--text-secondary);">${funcSim.toFixed(3)}</span>
+        </div>
+        <p class="evidence-text">There is ${funcSim >= 0.5 ? 'significant' : funcSim >= 0.25 ? 'moderate' : 'limited'} overlap between the predicted functional annotations (GO terms and EC numbers) of this protein and those of the closest toxin match, ${funcSim >= 0.25 ? 'suggesting shared biological function' : 'providing little additional evidence for toxin-like activity'}.</p>
+      </div>
+    </div>
+    <div class="recommend-card animate-in delay-6">
+      <strong>Recommendation:</strong> ${escHtml(rec)}
+    </div>
+  `;
+}
+
+// ─── Copy JSON ─────────────────────────────────────────────────────────────
+document.getElementById('copy-json-btn').addEventListener('click', () => {
+  if (!lastResult) return;
+  navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => {
+    const btn = document.getElementById('copy-json-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy JSON'; }, 2000);
+  });
+});
+
+// ─── Utility ───────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+checkHealth();
+updateSeqLen();
+</script>
+
+</body>
+</html>
