@@ -13,7 +13,6 @@ from components.charts import (
     build_function_bars, build_function_overlap,
 )
 from components.protein_3d import render_protein_3d, _aligned_residue_set
-from components.api_client import get_function_result
 
 try:
     from video_generator import ProteinVideoData, generate_video
@@ -37,15 +36,7 @@ def render_results(data: dict, key_prefix: str = "") -> None:
     # Tabbed detail area
     has_structure = data.get("pdb_string") is not None
 
-    # Check if real InterPro result is ready
-    sequence_id = data.get("sequence_id")
-    real_fn = get_function_result(sequence_id) if sequence_id else None
-    if real_fn is not None:
-        data["function_prediction"] = real_fn
-
     tab_labels = ["Overview", "Matches", "Structure", "Score Breakdown", "Function", "Explain"]
-    if real_fn is None:
-        tab_labels = ["Overview", "Matches", "Structure", "Score Breakdown", "Explain"]
     tabs = st.tabs(tab_labels)
 
     # ── Tab 0: Overview ──────────────────────────────────────────────────
@@ -238,7 +229,7 @@ def render_results(data: dict, key_prefix: str = "") -> None:
             components_list.append(
                 ("Structure Similarity", struct_sim if struct_sim is not None else 0, weight_set.get("Structure", 0)),
             )
-        if real_fn is not None:
+        if True:  # function always available
             components_list.append(
                 ("Function Overlap", func_overlap, weight_set.get("Function", 0)),
             )
@@ -285,7 +276,7 @@ def render_results(data: dict, key_prefix: str = "") -> None:
                 st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}threshold")
 
     # ── Tab 4: Function (only shown when InterPro result is ready) ───────
-    if real_fn is not None:
+    if True:  # function always available
         with tabs[4]:
             function_pred = data.get("function_prediction")
             if function_pred:
@@ -362,7 +353,7 @@ def render_results(data: dict, key_prefix: str = "") -> None:
                             st.caption(t)
 
     # ── Tab 5 / 4: Explain ───────────────────────────────────────────────
-    explain_idx = 5 if real_fn is not None else 4
+    explain_idx = 5
     with tabs[explain_idx]:
         risk_score = data["risk_score"]
         risk_level = data["risk_level"]
@@ -560,7 +551,7 @@ def render_results(data: dict, key_prefix: str = "") -> None:
             st.markdown(active_paragraph)
 
         # Function overlap explanation — only shown once InterPro result is ready
-        if real_fn is not None:
+        if True:  # function always available
             if func_overlap >= 0.6:
                 func_paragraph = (
                     f"**Functional Annotation Overlap ({func_overlap:.3f}):** The predicted Gene Ontology "

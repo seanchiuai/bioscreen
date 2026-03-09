@@ -30,39 +30,12 @@ from app.models.schemas import (
 from app.monitoring import default_analyzer, default_store
 from app.monitoring.schemas import AnomalyAlert, SessionEntry, SessionState
 from app.pipeline.embedding import get_embedding_model
-from app.pipeline.function import FunctionPredictor
 from app.pipeline.scoring import compute_score
 from app.pipeline.sequence import validate_sequence, SequenceType
 from app.pipeline.similarity import CombinedSimilaritySearcher
 from app.pipeline.structure import predict_structure
 
 router = APIRouter()
-
-# Global function predictor instance
-_function_predictor = None
-
-# In-memory store for background InterPro results: sequence_id -> FunctionPrediction
-_function_results: Dict[str, FunctionPrediction] = {}
-
-
-def get_function_predictor() -> FunctionPredictor:
-    """Get the global FunctionPredictor instance."""
-    global _function_predictor
-    if _function_predictor is None:
-        _function_predictor = FunctionPredictor()
-    return _function_predictor
-
-
-async def _run_interpro_background(sequence_id: str, sequence: str) -> None:
-    """Fire-and-forget task: fetch real InterPro prediction and cache it."""
-    try:
-        predictor = get_function_predictor()
-        result = await predictor._interpro.predict(sequence)
-        if result is not None:
-            _function_results[sequence_id] = result
-            logger.info("InterPro result ready for {}", sequence_id)
-    except Exception as e:
-        logger.warning("Background InterPro failed for {}: {}", sequence_id, e)
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -205,11 +178,9 @@ async def screen_sequence(
             top_k=request_data.top_k,
         )
 
-        # Function prediction (run in thread to avoid blocking event loop)
-        function_predictor = get_function_predictor()
-        # Use mock immediately for fast response; fire InterPro in background
-        function_prediction = function_predictor.predict(request_data.sequence)
-        asyncio.create_task(_run_interpro_background(sequence_id, request_data.sequence))
+        # Function prediction: use GO terms from top DB matches (instant, no external API)
+        # The toxin DB already has GO terms for 1996/2005 proteins — pull from top hits.
+        function_prediction = None
 
         # Convert similarity hits to ToxinMatch objects
         top_matches = []
@@ -293,16 +264,44 @@ async def screen_sequence(
                 except Exception as e:
                     logger.warning(f"Active site comparison failed: {e}")
 
-        # Calculate function overlap
-        # DB stores GO terms as "GO:0005576:C:extracellular region" — extract just the ID prefix
+        # Build function_prediction from top match GO terms (instant — already in DB)
+        # Normalize "GO:0005576:C:extracellular region" → {"term": "GO:0005576", "name": "extracellular region"}
+        if top_matches and top_matches[0].go_terms:
+            seen = set()
+            go_terms_out = []
+            for raw in top_matches[0].go_terms:
+                parts = raw.split(":")
+                if len(parts) >= 2:
+                    go_id = parts[0] + ":" + parts[1]
+                    go_name = ":".join(parts[3:]) if len(parts) > 3 else (parts[2] if len(parts) > 2 else "")
+                    if go_id not in seen:
+                        seen.add(go_id)
+                        go_terms_out.append({"term": go_id, "name": go_name.strip(), "confidence": "1.0"})
+            top_match_name = top_matches[0].name
+            function_prediction = FunctionPrediction(
+                go_terms=go_terms_out,
+                ec_numbers=[{"number": ec, "name": "", "confidence": "1.0"} for ec in top_matches[0].ec_numbers],
+                summary=f"Functional annotations from top match: {top_match_name}.",
+            )
+        else:
+            function_prediction = FunctionPrediction(go_terms=[], ec_numbers=[], summary="No functional annotations available.")
+
+        # Calculate function overlap — compare top match GO terms across top 3 hits
+        # All hits share the same DB GO terms so use pairwise Jaccard across top 3
         function_overlap = 0.0
-        if top_matches and function_prediction.go_terms:
-            query_go_set = {term["term"] for term in function_prediction.go_terms}
-            for match in top_matches[:3]:
-                # Normalize DB go_terms: "GO:0005576:C:..." → "GO:0005576"
-                match_go_set = {t.split(":")[0] + ":" + t.split(":")[1] if ":" in t else t for t in match.go_terms}
-                if query_go_set and match_go_set:
-                    overlap = len(query_go_set & match_go_set) / len(query_go_set | match_go_set)
+        if top_matches:
+            def normalize_go(terms):
+                out = set()
+                for t in terms:
+                    parts = t.split(":")
+                    if len(parts) >= 2:
+                        out.add(parts[0] + ":" + parts[1])
+                return out
+            ref_go = normalize_go(top_matches[0].go_terms)
+            for match in top_matches[1:3]:
+                match_go = normalize_go(match.go_terms)
+                if ref_go and match_go:
+                    overlap = len(ref_go & match_go) / len(ref_go | match_go)
                     function_overlap = max(function_overlap, overlap)
 
         risk_score, score_explanation = compute_score(
@@ -501,16 +500,6 @@ async def compare_structures(
         aligned_residues=result.aligned_residues,
     )
 
-
-@router.get("/function/{sequence_id}", response_model=FunctionPrediction)
-async def get_function_result(sequence_id: str) -> FunctionPrediction:
-    """Poll for background InterPro function prediction result.
-
-    Returns 202 (still processing) or 200 with the result once ready.
-    """
-    if sequence_id not in _function_results:
-        raise HTTPException(status_code=202, detail="still processing")
-    return _function_results[sequence_id]
 
 
 @router.post("/video")
