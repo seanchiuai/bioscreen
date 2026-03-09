@@ -1413,7 +1413,6 @@
       <button class="tab-item" onclick="showTab(this, 'matches')">Matches</button>
       <button class="tab-item" onclick="showTab(this, 'structure')">Structure</button>
       <button class="tab-item" onclick="showTab(this, 'scores')">Score Breakdown</button>
-      <button class="tab-item" onclick="showTab(this, 'function')">Function</button>
       <button class="tab-item" onclick="showTab(this, 'explain')">Explain</button>
     </div>
 
@@ -1438,7 +1437,6 @@
           <div class="mode-badges">
             <span class="mode-badge">Embedding</span>
             <span class="mode-badge">Structure</span>
-            <span class="mode-badge">Function</span>
           </div>
         </div>
       </div>
@@ -1481,8 +1479,6 @@
           <div class="chart-title">Score Contributions</div>
           <svg id="donut-svg" viewBox="0 0 200 160" style="width:100%;max-width:240px;display:block;margin:0 auto;">
             <circle cx="100" cy="75" r="55" fill="none" stroke="#e0ddd6" stroke-width="22"/>
-            <circle id="donut-func" cx="100" cy="75" r="55" fill="none" stroke="#2a9d5c" stroke-width="22"
-              stroke-dasharray="0 345.6" stroke-dashoffset="0" transform="rotate(-90 100 75)"/>
             <circle id="donut-struct" cx="100" cy="75" r="55" fill="none" stroke="#d48c0e" stroke-width="22"
               stroke-dasharray="0 345.6" stroke-dashoffset="0" transform="rotate(-90 100 75)"/>
             <circle id="donut-emb" cx="100" cy="75" r="55" fill="none" stroke="#dc3545" stroke-width="22"
@@ -1493,7 +1489,6 @@
           <div class="chart-legend" id="donut-legend">
             <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#dc3545;"></div><span id="legend-emb">Embedding</span></div>
             <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#d48c0e;"></div><span id="legend-struct">Structure</span></div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#2a9d5c;"></div><span id="legend-func">Function</span></div>
           </div>
         </div>
       </div>
@@ -1622,30 +1617,12 @@
           <span id="score-struct-meta" class="score-meta">Weight: 0.30 &middot; Contribution: —</span>
         </div>
 
-        <div class="score-row">
-          <span class="score-label">Function Overlap</span>
-          <div class="score-track"><div id="score-func-bar" class="score-fill" style="width:0%"></div></div>
-          <span id="score-func-num" class="score-num">—</span>
-        </div>
-        <div class="score-row" style="margin-bottom:1rem;">
-          <span id="score-func-meta" class="score-meta">Weight: 0.20 &middot; Contribution: —</span>
-        </div>
-
         <div class="score-total">
           <span class="score-total-label">Final Risk Score</span>
           <span id="score-total-value" class="score-total-value">—</span>
         </div>
       </div>
 
-    </div>
-
-    <!-- ── Function Tab ── -->
-    <div id="tab-function" class="tab-content" style="display:none;">
-      <div id="explain-content-function">
-        <div class="func-loading">
-          Run a screening to see function predictions
-        </div>
-      </div>
     </div>
 
     <!-- ── Explain Tab ── -->
@@ -1830,7 +1807,6 @@ const DEMO_SEQUENCES = {
 
 // ─── State ─────────────────────────────────────────────────────────────────
 let lastResult = null;
-let functionPollTimer = null;
 let currentViewStyle = 'cartoon';
 let currentColorMode = 'Default';
 
@@ -1958,10 +1934,6 @@ screenBtn.addEventListener('click', async () => {
     document.querySelector('.tab-item').classList.add('active');
     document.getElementById('tab-overview').style.display = 'block';
 
-    // Start polling function tab
-    if (functionPollTimer) clearInterval(functionPollTimer);
-    startFunctionPoll(data.sequence_id);
-
   } catch (err) {
     showError('Screening failed: ' + err.message);
     console.error(err);
@@ -2008,33 +1980,26 @@ function renderResults(data) {
   const rf = data.risk_factors || {};
   const embSim    = rf.max_embedding_similarity ?? (topMatch ? topMatch.embedding_similarity : 0) ?? 0;
   const structSim = rf.max_structure_similarity ?? (topMatch ? (topMatch.structure_similarity ?? 0) : 0);
-  const funcSim   = rf.function_overlap ?? 0;
 
   const embContrib    = embSim    * 0.50;
   const structContrib = structSim * 0.30;
-  const funcContrib   = funcSim   * 0.20;
   const circumference = 2 * Math.PI * 55; // ~345.58
 
-  const funcArc    = funcContrib    / 1.0 * circumference;
   const structArc  = structContrib  / 1.0 * circumference;
   const embArc     = embContrib     / 1.0 * circumference;
 
-  document.getElementById('donut-func').setAttribute('stroke-dasharray',   `${funcArc.toFixed(1)} ${(circumference - funcArc).toFixed(1)}`);
-  document.getElementById('donut-func').setAttribute('stroke-dashoffset',  '0');
-
   document.getElementById('donut-struct').setAttribute('stroke-dasharray',  `${structArc.toFixed(1)} ${(circumference - structArc).toFixed(1)}`);
-  document.getElementById('donut-struct').setAttribute('stroke-dashoffset', `-${funcArc.toFixed(1)}`);
+  document.getElementById('donut-struct').setAttribute('stroke-dashoffset', '0');
 
   document.getElementById('donut-emb').setAttribute('stroke-dasharray',    `${embArc.toFixed(1)} ${(circumference - embArc).toFixed(1)}`);
-  document.getElementById('donut-emb').setAttribute('stroke-dashoffset',   `-${(funcArc + structArc).toFixed(1)}`);
+  document.getElementById('donut-emb').setAttribute('stroke-dashoffset',   `-${structArc.toFixed(1)}`);
 
   document.getElementById('donut-center-val').textContent = riskScore.toFixed(3);
   document.getElementById('legend-emb').textContent    = `Embedding (${embSim.toFixed(3)})`;
   document.getElementById('legend-struct').textContent = `Structure (${structSim != null ? structSim.toFixed(3) : 'N/A'})`;
-  document.getElementById('legend-func').textContent   = `Function (${funcSim.toFixed(3)})`;
 
   // --- Radar (update approximate points based on scores) ---
-  updateRadar(embSim, structSim, funcSim, riskScore);
+  updateRadar(embSim, structSim, 0, riskScore);
 
   // --- Bar chart (top matches) ---
   renderBarChart(data.top_matches || []);
@@ -2048,16 +2013,10 @@ function renderResults(data) {
   }
 
   // --- Score breakdown tab ---
-  renderScoreBreakdown(embSim, structSim, funcSim, riskScore, embContrib, structContrib, funcContrib);
+  renderScoreBreakdown(embSim, structSim, riskScore, embContrib, structContrib);
 
   // --- Explain tab ---
-  renderExplain(data, embSim, structSim, funcSim, riskLevel);
-
-  // --- Function tab initial state ---
-  renderFunctionLoading();
-  if (data.function_prediction) {
-    renderFunction(data.function_prediction);
-  }
+  renderExplain(data, embSim, structSim, riskLevel);
 
   document.getElementById('video-output').style.display = 'none';
   document.getElementById('generate-video-btn').style.display = data.pdb_string ? '' : 'none';
@@ -2279,7 +2238,7 @@ function renderStructure(pdbString, pocketRes, dangerRes, alignedRegions) {
 }
 
 // ─── Score breakdown tab ───────────────────────────────────────────────────
-function renderScoreBreakdown(emb, struct, func, total, embC, structC, funcC) {
+function renderScoreBreakdown(emb, struct, total, embC, structC) {
   document.getElementById('score-emb-bar').style.width    = (emb * 100).toFixed(1) + '%';
   document.getElementById('score-emb-num').textContent    = emb.toFixed(3);
   document.getElementById('score-emb-meta').innerHTML     = `Weight: 0.50 &middot; Contribution: ${embC.toFixed(3)}`;
@@ -2288,17 +2247,13 @@ function renderScoreBreakdown(emb, struct, func, total, embC, structC, funcC) {
   document.getElementById('score-struct-num').textContent = struct.toFixed(3);
   document.getElementById('score-struct-meta').innerHTML  = `Weight: 0.30 &middot; Contribution: ${structC.toFixed(3)}`;
 
-  document.getElementById('score-func-bar').style.width   = (func * 100).toFixed(1) + '%';
-  document.getElementById('score-func-num').textContent   = func.toFixed(3);
-  document.getElementById('score-func-meta').innerHTML    = `Weight: 0.20 &middot; Contribution: ${funcC.toFixed(3)}`;
-
   const totalEl = document.getElementById('score-total-value');
   totalEl.textContent = total.toFixed(3);
   totalEl.className = 'score-total-value risk-' + (lastResult ? lastResult.risk_level.toLowerCase() : 'low');
 
 }
 
-function renderWaterfall(embC, structC, funcC, total) {
+function renderWaterfall(embC, structC, total) {
   const g = document.getElementById('waterfall-bars');
   g.innerHTML = '';
   const maxH = 160; // px for value 1.0, baseline y=170
@@ -2316,17 +2271,11 @@ function renderWaterfall(embC, structC, funcC, total) {
 
   addWaterfallLine(g, 280, 170 - h1 - h2, 310, 170 - h1 - h2);
 
-  // Bar 3: Function contribution from embC+structC
-  const h3 = funcC * maxH;
-  addWaterfallBar(g, 310, 70, 170 - h1 - h2 - h3, h3, '#9c9690', '+' + funcC.toFixed(3), 'Function');
-
-  addWaterfallLine(g, 380, 170 - h1 - h2 - h3, 410, 170 - h1 - h2 - h3);
-
-  // Bar 4: Total
+  // Bar 3: Total
   const hT = total * maxH;
   const riskColors = {high: '#dc3545', medium: '#d48c0e', low: '#2a9d5c'};
   const level = lastResult ? lastResult.risk_level.toLowerCase() : 'low';
-  addWaterfallBar(g, 410, 50, 170 - hT, hT, riskColors[level] || '#dc3545', total.toFixed(3), 'Total', 13, riskColors[level] || '#dc3545');
+  addWaterfallBar(g, 310, 50, 170 - hT, hT, riskColors[level] || '#dc3545', total.toFixed(3), 'Total', 13, riskColors[level] || '#dc3545');
 }
 
 function addWaterfallBar(g, x, w, y, h, fill, valLabel, nameLabel, fontSize, valColor) {
@@ -2360,109 +2309,8 @@ function addWaterfallLine(g, x1, y1, x2, y2) {
   g.appendChild(line);
 }
 
-// ─── Function tab ──────────────────────────────────────────────────────────
-function renderFunctionLoading() {
-  const el = document.getElementById('explain-content-function');
-  el.innerHTML = `<div class="func-loading"><span class="spinner"></span>Fetching from InterPro... this may take a moment.</div>`;
-}
-
-function renderFunction(fp) {
-  const el = document.getElementById('explain-content-function');
-  if (!fp) {
-    el.innerHTML = '<div class="func-loading">No function prediction available.</div>';
-    return;
-  }
-
-  const goTerms  = fp.go_terms  || [];
-  const ecNumbers = fp.ec_numbers || [];
-
-  let html = '';
-
-  if (goTerms.length) {
-    html += '<div class="section-label animate-in delay-3">GO Terms</div>';
-    html += '<div class="func-grid animate-in delay-3">';
-    goTerms.slice(0, 8).forEach(gt => {
-      const id    = gt.id || gt.go_id || '';
-      const name  = gt.name || gt.term || '';
-      const score = parseFloat(gt.score || gt.confidence || 0);
-      html += `<div class="func-card">
-        <div class="func-card-header">
-          <span class="func-id">${escHtml(id)}</span>
-          <span class="func-name">${escHtml(name)}</span>
-        </div>
-        <div class="func-bar"><div class="func-bar-fill" style="width:${(score * 100).toFixed(0)}%"></div></div>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  if (ecNumbers.length) {
-    html += '<div class="section-label" style="margin-top:1.5rem;">EC Numbers</div>';
-    html += '<div class="func-grid animate-in delay-4">';
-    ecNumbers.slice(0, 4).forEach(ec => {
-      const id    = ec.id || ec.ec_number || '';
-      const name  = ec.name || ec.description || '';
-      const score = parseFloat(ec.score || ec.confidence || 0);
-      html += `<div class="func-card">
-        <div class="func-card-header">
-          <span class="func-id">${escHtml(id)}</span>
-          <span class="func-name">${escHtml(name)}</span>
-        </div>
-        <div class="func-bar"><div class="func-bar-fill" style="width:${(score * 100).toFixed(0)}%"></div></div>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  if (fp.summary) {
-    html += `<div class="chart-container animate-in delay-5" style="margin-top:1rem;">
-      <div class="chart-title">Function Summary</div>
-      <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7;">${escHtml(fp.summary)}</p>
-    </div>`;
-  }
-
-  if (!html) {
-    html = '<div class="func-loading">No function annotations returned.</div>';
-  }
-
-  el.innerHTML = html;
-}
-
-// ─── Poll function endpoint ────────────────────────────────────────────────
-function startFunctionPoll(seqId) {
-  if (!seqId) return;
-  let attempts = 0;
-  const maxAttempts = 24; // 2 min total
-
-  functionPollTimer = setInterval(async () => {
-    attempts++;
-    try {
-      const r = await fetch(`${API}/function/${encodeURIComponent(seqId)}`);
-      if (r.ok) {
-        const fp = await r.json();
-        if (fp && (fp.go_terms?.length || fp.ec_numbers?.length)) {
-          renderFunction(fp);
-          clearInterval(functionPollTimer);
-          return;
-        }
-      }
-    } catch { /* ignore */ }
-
-    if (attempts >= maxAttempts) {
-      clearInterval(functionPollTimer);
-      // Use function_prediction from last result if available
-      if (lastResult && lastResult.function_prediction) {
-        renderFunction(lastResult.function_prediction);
-      } else {
-        document.getElementById('explain-content-function').innerHTML =
-          '<div class="func-loading">Function prediction timed out or unavailable.</div>';
-      }
-    }
-  }, 5000);
-}
-
 // ─── Explain tab ───────────────────────────────────────────────────────────
-function renderExplain(data, embSim, structSim, funcSim, riskLevel) {
+function renderExplain(data, embSim, structSim, riskLevel) {
   const riskIcons   = { high: '&#x26A0;', medium: '&#x26A0;', low: '&#x2705;' };
   const riskMessages = {
     high:    'HIGH RISK — Strong similarity to known toxins detected across multiple evidence lines',
@@ -2506,13 +2354,6 @@ function renderExplain(data, embSim, structSim, funcSim, riskLevel) {
           <span class="evidence-value" style="color:${structColor};">${structVal != null ? structVal.toFixed(3) : '—'}</span>
         </div>
         <p class="evidence-text">${structVal != null ? `Foldseek structural alignment found ${structVal >= 0.7 ? 'very high' : structVal >= 0.4 ? 'moderate' : 'low'} 3D fold similarity (TM-score ${structVal.toFixed(3)}) between the predicted structure and the top toxin match. Structure determines function — two proteins with the same fold can have similar biological activity regardless of sequence differences.` : 'Structure similarity data was not available for this screening run (ESMFold may not have been called or Foldseek alignment was skipped).'}</p>
-      </div>
-      <div class="evidence-block animate-in delay-6">
-        <div class="evidence-block-header">
-          <span class="evidence-label">Function Overlap</span>
-          <span class="evidence-value" style="color:var(--text-secondary);">${funcSim.toFixed(3)}</span>
-        </div>
-        <p class="evidence-text">There is ${funcSim >= 0.5 ? 'significant' : funcSim >= 0.25 ? 'moderate' : 'limited'} overlap between the predicted functional annotations (GO terms and EC numbers) of this protein and those of the closest toxin match, ${funcSim >= 0.25 ? 'suggesting shared biological function' : 'providing little additional evidence for toxin-like activity'}.</p>
       </div>
     </div>
     <div class="recommend-card animate-in delay-6">
