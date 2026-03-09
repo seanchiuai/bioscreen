@@ -8,8 +8,12 @@ os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 from app import __version__
@@ -99,6 +103,13 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(router, prefix="/api")
+
+    frontend_dir = Path(__file__).parent.parent / "frontend" / "static"
+    if frontend_dir.exists():
+        @app.get("/")
+        async def serve_frontend():
+            return FileResponse(str(frontend_dir / "index.html"))
+        app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="static")
 
     return app
 
