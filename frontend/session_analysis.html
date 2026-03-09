@@ -1505,11 +1505,14 @@
 const API = 'http://localhost:8000/api';
 const SESSION_ID = crypto.randomUUID();
 
-async function checkHealth() {
-  // No status badge on this page
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
 }
 
-
+async function checkHealth() {
+  // No status badge on this page
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1859,9 +1862,6 @@ function renderTrendChart(scores) {
 updateSaButton();
 
 // ─── Init ──────────────────────────────────────────────────────────────────
-checkHealth();
-updateSeqLen();
-
 checkHealth();
 </script>
 </body>

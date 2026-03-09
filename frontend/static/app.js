@@ -8,7 +8,7 @@ const API_BASE = '/api';
 
 let sessionId = crypto.randomUUID();
 let currentResult = null;
-let functionPollInterval = null;
+
 
 const DEMO_SEQUENCES = {
   "Scorpion toxin Aah4 (HIGH — known toxin, 84aa)": {
@@ -99,13 +99,6 @@ async function screenSequence(sequence, sequenceId, topK, sid) {
   return await resp.json();
 }
 
-async function pollFunction(sequenceId) {
-  try {
-    const resp = await fetch(`${API_BASE}/function/${sequenceId}`, { signal: AbortSignal.timeout(10000) });
-    if (resp.status === 200) return await resp.json();
-    return null;
-  } catch { return null; }
-}
 
 async function getSessionAlerts(sid) {
   try {
@@ -184,7 +177,6 @@ async function handleScreen() {
     currentResult = data;
     document.getElementById('results-section').classList.remove('view-hidden');
     renderAllTabs(data);
-    startFunctionPolling(data.sequence_id, data);
     showTab('overview', document.querySelector('[data-tab="overview"]'));
   } catch (err) {
     showError(err.message);
@@ -219,25 +211,6 @@ function showError(msg) {
   section.innerHTML = `<div class="error-box"><strong>Screening Error:</strong> ${escapeHtml(msg)}</div>`;
 }
 
-function startFunctionPolling(sequenceId, data) {
-  if (functionPollInterval) clearInterval(functionPollInterval);
-  if (!sequenceId) return;
-
-  const btnFunc = document.getElementById('tab-btn-function');
-
-  functionPollInterval = setInterval(async () => {
-    const result = await pollFunction(sequenceId);
-    if (result) {
-      clearInterval(functionPollInterval);
-      functionPollInterval = null;
-      data.function_prediction = result;
-      currentResult = data;
-      // Show function tab button
-      if (btnFunc) btnFunc.classList.remove('view-hidden');
-      renderFunctionTab(data);
-    }
-  }, 5000);
-}
 
 
 // ── Section E: Tab Switching ────────────────────────────────────────

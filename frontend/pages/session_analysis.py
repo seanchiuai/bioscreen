@@ -117,10 +117,12 @@ def page() -> None:
     # 3. Run button
     # ------------------------------------------------------------------
     n_seq = len(sequences)
-    run_disabled = n_seq == 0
     run_label = f"Screen {n_seq} Sequence{'s' if n_seq != 1 else ''}" if n_seq else "Screen Sequences"
 
-    if st.button(run_label, disabled=run_disabled, type="primary"):
+    if st.button(run_label, type="primary"):
+        if n_seq == 0:
+            st.warning("Please paste at least one sequence before screening.")
+            st.stop()
         # Generate a fresh session id for this batch
         session_id = str(uuid.uuid4())
         st.session_state["sa_session_id"] = session_id
