@@ -1413,6 +1413,7 @@
       <button class="tab-item" onclick="showTab(this, 'matches')">Matches</button>
       <button class="tab-item" onclick="showTab(this, 'structure')">Structure</button>
       <button class="tab-item" onclick="showTab(this, 'scores')">Score Breakdown</button>
+      <button class="tab-item" onclick="showTab(this, 'function')">Function</button>
       <button class="tab-item" onclick="showTab(this, 'explain')">Explain</button>
     </div>
 
@@ -1623,6 +1624,13 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- ── Function Tab ── -->
+    <div id="tab-function" class="tab-content" style="display:none;">
+      <div id="function-content" style="padding:0.5rem 0;">
+        <p style="color:var(--text-tertiary);font-size:0.85rem;">Run a screening to see functional annotations.</p>
+      </div>
     </div>
 
     <!-- ── Explain Tab ── -->
@@ -2015,6 +2023,9 @@ function renderResults(data) {
   // --- Score breakdown tab ---
   renderScoreBreakdown(embSim, structSim, riskScore, embContrib, structContrib);
 
+  // --- Function tab ---
+  renderFunction(data.function_prediction, (data.top_matches || [])[0]);
+
   // --- Explain tab ---
   renderExplain(data, embSim, structSim, riskLevel);
 
@@ -2310,6 +2321,39 @@ function addWaterfallLine(g, x1, y1, x2, y2) {
 }
 
 // ─── Explain tab ───────────────────────────────────────────────────────────
+function renderFunction(fp, topMatch) {
+  const el = document.getElementById('function-content');
+  if (!fp || (!fp.go_terms?.length && !fp.ec_numbers?.length)) {
+    el.innerHTML = '<p style="color:var(--text-tertiary);font-size:0.85rem;">No functional annotations available.</p>';
+    return;
+  }
+  const matchName = topMatch ? escHtml(topMatch.name) : 'top match';
+  let html = `<p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">Annotations sourced from <strong>${matchName}</strong> in the toxin reference database.</p>`;
+
+  if (fp.go_terms?.length) {
+    html += '<div style="margin-bottom:1rem;"><div style="font-size:0.75rem;font-weight:600;color:var(--text-tertiary);letter-spacing:0.05em;margin-bottom:0.5rem;">GO TERMS</div>';
+    fp.go_terms.forEach(t => {
+      html += `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0;border-bottom:1px solid var(--border-light);">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-secondary);min-width:90px;">${escHtml(t.term)}</span>
+        <span style="font-size:0.82rem;color:var(--text-primary);">${escHtml(t.name || '')}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (fp.ec_numbers?.length) {
+    html += '<div><div style="font-size:0.75rem;font-weight:600;color:var(--text-tertiary);letter-spacing:0.05em;margin-bottom:0.5rem;">EC NUMBERS</div>';
+    fp.ec_numbers.forEach(e => {
+      html += `<div style="padding:0.4rem 0;border-bottom:1px solid var(--border-light);">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-primary);">${escHtml(e.number)}</span>
+        ${e.name ? `<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:0.5rem;">${escHtml(e.name)}</span>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
 function renderExplain(data, embSim, structSim, riskLevel) {
   const riskIcons   = { high: '&#x26A0;', medium: '&#x26A0;', low: '&#x2705;' };
   const riskMessages = {
