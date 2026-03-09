@@ -1189,7 +1189,7 @@
         <!-- Radar Chart: Multi-axis threat profile (static) -->
         <div class="chart-container">
           <div class="chart-title">Threat Profile</div>
-          <svg viewBox="0 0 200 200" style="width:100%;max-width:240px;display:block;margin:0 auto;">
+          <svg viewBox="-20 -10 240 230" style="width:100%;max-width:260px;display:block;margin:0 auto;">
             <!-- Grid pentagons -->
             <polygon points="100,30 166,55 153,130 47,130 34,55" fill="none" stroke="#e0ddd6" stroke-width="0.5"/>
             <polygon points="100,51 147,68 138,113 62,113 53,68" fill="none" stroke="#e0ddd6" stroke-width="0.5"/>
@@ -1200,7 +1200,7 @@
             <line x1="100" y1="100" x2="153" y2="130" stroke="#e0ddd6" stroke-width="0.5"/>
             <line x1="100" y1="100" x2="47" y2="130" stroke="#e0ddd6" stroke-width="0.5"/>
             <line x1="100" y1="100" x2="34" y2="55" stroke="#e0ddd6" stroke-width="0.5"/>
-            <!-- Data polygon (static) -->
+            <!-- Data polygon -->
             <polygon id="radar-polygon" points="100,100 100,100 100,100 100,100 100,100" fill="rgba(220,53,69,0.12)" stroke="#dc3545" stroke-width="1.5"/>
             <!-- Data points -->
             <circle id="radar-p0" cx="100" cy="100" r="3" fill="#dc3545"/>
@@ -1208,12 +1208,12 @@
             <circle id="radar-p2" cx="100" cy="100" r="3" fill="#dc3545"/>
             <circle id="radar-p3" cx="100" cy="100" r="3" fill="#dc3545"/>
             <circle id="radar-p4" cx="100" cy="100" r="3" fill="#dc3545"/>
-            <!-- Labels -->
-            <text x="100" y="22" text-anchor="middle" class="radar-axis-label">Embedding</text>
-            <text x="176" y="52" text-anchor="start" class="radar-axis-label">Structure</text>
-            <text x="160" y="140" text-anchor="start" class="radar-axis-label">Function</text>
-            <text x="40" y="145" text-anchor="end" class="radar-axis-label">Active Site</text>
-            <text x="24" y="52" text-anchor="end" class="radar-axis-label">Toxin Class</text>
+            <!-- Labels — padded away from edges -->
+            <text x="100" y="18" text-anchor="middle" class="radar-axis-label">Embedding</text>
+            <text x="178" y="52" text-anchor="start" class="radar-axis-label">Structure</text>
+            <text x="165" y="148" text-anchor="start" class="radar-axis-label">Function</text>
+            <text x="35" y="148" text-anchor="end" class="radar-axis-label">Active Site</text>
+            <text x="22" y="52" text-anchor="end" class="radar-axis-label">Risk Score</text>
           </svg>
         </div>
 
@@ -1397,40 +1397,6 @@
         </div>
       </div>
 
-      <!-- Waterfall chart (static) -->
-      <div class="chart-container animate-in delay-4">
-        <div class="chart-title">Score Waterfall — Component Contributions</div>
-        <svg viewBox="0 0 500 200" style="width:100%;display:block;">
-          <line x1="80" y1="170" x2="460" y2="170" stroke="#e0ddd6" stroke-width="0.5"/>
-          <line x1="80" y1="130" x2="460" y2="130" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
-          <line x1="80" y1="90" x2="460" y2="90" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
-          <line x1="80" y1="50" x2="460" y2="50" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
-          <line x1="80" y1="10" x2="460" y2="10" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
-          <text x="75" y="173" text-anchor="end" class="hist-label">0.0</text>
-          <text x="75" y="133" text-anchor="end" class="hist-label">0.25</text>
-          <text x="75" y="93" text-anchor="end" class="hist-label">0.50</text>
-          <text x="75" y="53" text-anchor="end" class="hist-label">0.75</text>
-          <text x="75" y="16" text-anchor="end" class="hist-label">1.0</text>
-          <g id="waterfall-bars"></g>
-        </svg>
-      </div>
-
-      <!-- Threshold comparison -->
-      <div class="chart-container animate-in delay-5">
-        <div class="chart-title">Risk Thresholds</div>
-        <svg viewBox="0 0 500 60" style="width:100%;display:block;">
-          <rect x="10" y="15" width="480" height="20" rx="10" fill="#eceae4"/>
-          <rect x="10" y="15" width="144" height="20" rx="10" fill="#2a9d5c" opacity="0.25"/>
-          <rect x="154" y="15" width="120" height="20" fill="#d48c0e" opacity="0.25"/>
-          <rect x="274" y="15" width="216" height="20" rx="10" fill="#dc3545" opacity="0.25"/>
-          <line x1="154" y1="10" x2="154" y2="40" stroke="#d48c0e" stroke-width="2"/>
-          <text x="154" y="52" text-anchor="middle" class="hist-label" fill="#d48c0e" font-weight="600">0.3 Medium</text>
-          <line x1="274" y1="10" x2="274" y2="40" stroke="#dc3545" stroke-width="2"/>
-          <text x="274" y="52" text-anchor="middle" class="hist-label" fill="#dc3545" font-weight="600">0.55 High</text>
-          <circle id="threshold-marker" cx="10" cy="25" r="8" fill="#1a1a1a" stroke="white" stroke-width="2"/>
-          <text id="threshold-label" x="10" y="7" text-anchor="middle" class="hist-value" font-size="11">—</text>
-        </svg>
-      </div>
     </div>
 
     <!-- ── Function Tab ── -->
@@ -1455,6 +1421,12 @@
     <!-- Bottom actions -->
     <div class="bottom-actions animate-in delay-6">
       <button class="btn-secondary" id="copy-json-btn">Copy JSON</button>
+      <button class="btn-screen" id="generate-video-btn" style="display:none;">Generate Video</button>
+    </div>
+    <div id="video-output" style="display:none;margin-top:1rem;text-align:center;">
+      <video id="result-video" controls style="max-width:100%;border-radius:var(--radius-lg);"></video>
+      <br>
+      <a id="download-video-link" download="bioscreen_analysis.mp4" style="display:inline-block;margin-top:0.5rem;" class="btn-secondary">Download Video</a>
     </div>
 
   </div><!-- end results-section -->
@@ -1657,9 +1629,9 @@ function renderResults(data) {
 
   // --- Donut chart ---
   const rf = data.risk_factors || {};
-  const embSim    = rf.embedding_similarity ?? (topMatch ? topMatch.embedding_similarity : 0) ?? 0;
-  const structSim = rf.structure_similarity ?? (topMatch ? (topMatch.structure_similarity ?? 0) : 0);
-  const funcSim   = rf.function_similarity ?? rf.function_overlap ?? 0;
+  const embSim    = rf.max_embedding_similarity ?? (topMatch ? topMatch.embedding_similarity : 0) ?? 0;
+  const structSim = rf.max_structure_similarity ?? (topMatch ? (topMatch.structure_similarity ?? 0) : 0);
+  const funcSim   = rf.function_overlap ?? 0;
 
   const embContrib    = embSim    * 0.50;
   const structContrib = structSim * 0.30;
@@ -1680,9 +1652,9 @@ function renderResults(data) {
   document.getElementById('donut-emb').setAttribute('stroke-dashoffset',   `-${(funcArc + structArc).toFixed(1)}`);
 
   document.getElementById('donut-center-val').textContent = riskScore.toFixed(3);
-  document.getElementById('legend-emb').textContent    = `Embedding (${embContrib.toFixed(3)})`;
-  document.getElementById('legend-struct').textContent = `Structure (${structContrib.toFixed(3)})`;
-  document.getElementById('legend-func').textContent   = `Function (${funcContrib.toFixed(3)})`;
+  document.getElementById('legend-emb').textContent    = `Embedding (${embSim.toFixed(3)})`;
+  document.getElementById('legend-struct').textContent = `Structure (${structSim != null ? structSim.toFixed(3) : 'N/A'})`;
+  document.getElementById('legend-func').textContent   = `Function (${funcSim.toFixed(3)})`;
 
   // --- Radar (update approximate points based on scores) ---
   updateRadar(embSim, structSim, funcSim, riskScore);
@@ -1709,26 +1681,62 @@ function renderResults(data) {
   if (data.function_prediction) {
     renderFunction(data.function_prediction);
   }
+
+  // Show generate video button if structure was predicted
+  const videoBtn = document.getElementById('generate-video-btn');
+  if (data.pdb_string) {
+    videoBtn.style.display = '';
+  } else {
+    videoBtn.style.display = 'none';
+  }
+  document.getElementById('video-output').style.display = 'none';
 }
+
+// ─── Generate Video ────────────────────────────────────────────────────────
+document.getElementById('generate-video-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('generate-video-btn');
+  if (!lastResult) return;
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const resp = await fetch(`${API}/video`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Session-Id': SESSION_ID },
+      body: JSON.stringify(lastResult),
+    });
+    if (resp.ok) {
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const videoEl = document.getElementById('result-video');
+      const dlLink = document.getElementById('download-video-link');
+      videoEl.src = url;
+      dlLink.href = url;
+      document.getElementById('video-output').style.display = '';
+    } else {
+      alert('Video generation failed: ' + await resp.text());
+    }
+  } catch(e) {
+    alert('Video generation error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate Video';
+  }
+});
 
 // ─── Radar chart update ────────────────────────────────────────────────────
 function updateRadar(emb, struct, func, total) {
-  // Axes: top=Embedding, right=Structure, bottom-right=Function, bottom-left=ActiveSite, left=ToxinClass
-  // Approximate active site / toxin class from total score
-  const activeSite  = Math.min(total * 1.1, 1.0);
-  const toxinClass  = Math.min(total * 0.95, 1.0);
+  // Axes: top=Embedding, right=Structure, bottom-right=Function, bottom-left=ActiveSite, left=RiskScore
+  const activeSite = Math.min(total * 1.1, 1.0);
 
-  // Map [0,1] values to SVG coords for each axis
-  // Center: 100,100. Each axis outer point at scale=1:
   const axisOuter = [
     [100, 30],    // Embedding (top)
     [166, 55],    // Structure (top-right)
     [153, 130],   // Function (bottom-right)
     [47, 130],    // Active Site (bottom-left)
-    [34, 55],     // Toxin Class (top-left)
+    [34, 55],     // Risk Score (top-left)
   ];
   const cx = 100, cy = 100;
-  const values = [emb, struct, func, activeSite, toxinClass];
+  const values = [emb, struct ?? 0, func, activeSite, total];
 
   const pts = axisOuter.map(([ax, ay], i) => {
     const v = values[i];
@@ -1922,20 +1930,6 @@ function renderScoreBreakdown(emb, struct, func, total, embC, structC, funcC) {
   totalEl.textContent = total.toFixed(3);
   totalEl.className = 'score-total-value risk-' + (lastResult ? lastResult.risk_level.toLowerCase() : 'low');
 
-  // Waterfall chart
-  renderWaterfall(embC, structC, funcC, total);
-
-  // Threshold marker (x maps 0..1 to 10..490 px in viewBox 0..500)
-  const markerX = 10 + total * 480;
-  document.getElementById('threshold-marker').setAttribute('cx', markerX.toFixed(1));
-  document.getElementById('threshold-label').setAttribute('x', markerX.toFixed(1));
-  document.getElementById('threshold-label').textContent = total.toFixed(3);
-
-  // Color the marker by risk
-  const riskColors = {high: '#dc3545', medium: '#d48c0e', low: '#2a9d5c'};
-  const level = lastResult ? lastResult.risk_level.toLowerCase() : 'low';
-  document.getElementById('threshold-marker').setAttribute('fill', riskColors[level] || '#1a1a1a');
-  document.getElementById('threshold-label').setAttribute('fill', riskColors[level] || '#1a1a1a');
 }
 
 function renderWaterfall(embC, structC, funcC, total) {
