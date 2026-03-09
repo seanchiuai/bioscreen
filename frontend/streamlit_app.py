@@ -7,8 +7,8 @@ between the Single Screen and Session Analysis pages.
 import streamlit as st
 
 st.set_page_config(
-    page_title="BioScreen",
-    page_icon="\U0001f9ec",
+    page_title="Orthogon",
+    page_icon="🧬",
     layout="wide",
     initial_sidebar_state="collapsed",
 )

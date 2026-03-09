@@ -39,7 +39,7 @@ def page():
 
     col_title, col_status = st.columns([4, 1])
     with col_title:
-        st.markdown("# BioScreen")
+        st.markdown("# Orthogon")
         st.markdown("Structure-based biosecurity screening for AI-designed proteins")
     with col_status:
         st.markdown(
@@ -132,7 +132,7 @@ def page():
     st.divider()
     st.markdown(
         '<div style="text-align:center; color:#94a3b8; font-size:0.8rem;">'
-        'BioScreen — Structure-based biosecurity screening for AI-designed proteins. '
+        'Orthogon — Structure-based biosecurity screening for AI-designed proteins. '
         'For research purposes only. Always validate results with experimental methods.'
         '</div>',
         unsafe_allow_html=True,

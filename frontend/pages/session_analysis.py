@@ -68,7 +68,7 @@ def page() -> None:
     # ------------------------------------------------------------------
     # 1. Header + health check
     # ------------------------------------------------------------------
-    st.title("Session Analysis")
+    st.title("Orthogon — Session Analysis")
     st.caption("Screen multiple sequences sequentially and monitor for behavioral patterns.")
 
     health = check_api_health()

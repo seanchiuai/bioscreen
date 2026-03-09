@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BioScreen — Live</title>
+<title>Orthogon — Live</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1352,7 +1352,7 @@
   <header class="header animate-in">
     <div style="display:flex; flex-direction:column; gap:0.25rem;">
       <div class="header-left">
-        <span class="logo">BioScreen<span class="logo-dot"></span></span>
+        <span class="logo">Orthogon<span class="logo-dot"></span></span>
         <span class="api-badge status-pill checking">
           <span class="status-dot"></span>
           Connecting...
@@ -1480,6 +1480,8 @@
           <div class="chart-title">Score Contributions</div>
           <svg id="donut-svg" viewBox="0 0 200 160" style="width:100%;max-width:240px;display:block;margin:0 auto;">
             <circle cx="100" cy="75" r="55" fill="none" stroke="#e0ddd6" stroke-width="22"/>
+            <circle id="donut-func" cx="100" cy="75" r="55" fill="none" stroke="#2a9d5c" stroke-width="22"
+              stroke-dasharray="0 345.6" stroke-dashoffset="0" transform="rotate(-90 100 75)"/>
             <circle id="donut-struct" cx="100" cy="75" r="55" fill="none" stroke="#d48c0e" stroke-width="22"
               stroke-dasharray="0 345.6" stroke-dashoffset="0" transform="rotate(-90 100 75)"/>
             <circle id="donut-emb" cx="100" cy="75" r="55" fill="none" stroke="#dc3545" stroke-width="22"
@@ -1490,6 +1492,7 @@
           <div class="chart-legend" id="donut-legend">
             <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#dc3545;"></div><span id="legend-emb">Embedding</span></div>
             <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#d48c0e;"></div><span id="legend-struct">Structure</span></div>
+            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#2a9d5c;"></div><span id="legend-func">Function</span></div>
           </div>
         </div>
       </div>
@@ -1616,6 +1619,15 @@
         </div>
         <div class="score-row" style="margin-bottom:1.5rem;">
           <span id="score-struct-meta" class="score-meta">Weight: 0.30 &middot; Contribution: —</span>
+        </div>
+
+        <div class="score-row">
+          <span class="score-label">Function Overlap</span>
+          <div class="score-track"><div id="score-func-bar" class="score-fill" style="width:0%;background:#2a9d5c;"></div></div>
+          <span id="score-func-num" class="score-num">—</span>
+        </div>
+        <div class="score-row" style="margin-bottom:1rem;">
+          <span id="score-func-meta" class="score-meta">Weight: 0.20 &middot; Contribution: —</span>
         </div>
 
         <div class="score-total">
@@ -1790,7 +1802,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    BioScreen — Structure-based biosecurity screening for AI-designed proteins. For research purposes only.
+    Orthogon — Structure-based biosecurity screening for AI-designed proteins. For research purposes only.
   </footer>
 
 </div>
@@ -1989,25 +2001,30 @@ function renderResults(data) {
   const embSim    = rf.max_embedding_similarity ?? (topMatch ? topMatch.embedding_similarity : 0) ?? 0;
   const structSim = rf.max_structure_similarity ?? (topMatch ? (topMatch.structure_similarity ?? 0) : 0);
 
+  const funcSim       = rf.function_overlap ?? 0;
   const embContrib    = embSim    * 0.50;
-  const structContrib = structSim * 0.30;
-  const circumference = 2 * Math.PI * 55; // ~345.58
+  const structContrib = (structSim ?? 0) * 0.30;
+  const funcContrib   = funcSim   * 0.20;
+  const circumference = 2 * Math.PI * 55;
 
-  const structArc  = structContrib  / 1.0 * circumference;
-  const embArc     = embContrib     / 1.0 * circumference;
+  const funcArc   = funcContrib   / 1.0 * circumference;
+  const structArc = structContrib / 1.0 * circumference;
+  const embArc    = embContrib    / 1.0 * circumference;
 
-  document.getElementById('donut-struct').setAttribute('stroke-dasharray',  `${structArc.toFixed(1)} ${(circumference - structArc).toFixed(1)}`);
-  document.getElementById('donut-struct').setAttribute('stroke-dashoffset', '0');
-
+  document.getElementById('donut-func').setAttribute('stroke-dasharray',   `${funcArc.toFixed(1)} ${(circumference - funcArc).toFixed(1)}`);
+  document.getElementById('donut-func').setAttribute('stroke-dashoffset',  '0');
+  document.getElementById('donut-struct').setAttribute('stroke-dasharray', `${structArc.toFixed(1)} ${(circumference - structArc).toFixed(1)}`);
+  document.getElementById('donut-struct').setAttribute('stroke-dashoffset',`-${funcArc.toFixed(1)}`);
   document.getElementById('donut-emb').setAttribute('stroke-dasharray',    `${embArc.toFixed(1)} ${(circumference - embArc).toFixed(1)}`);
-  document.getElementById('donut-emb').setAttribute('stroke-dashoffset',   `-${structArc.toFixed(1)}`);
+  document.getElementById('donut-emb').setAttribute('stroke-dashoffset',   `-${(funcArc + structArc).toFixed(1)}`);
 
   document.getElementById('donut-center-val').textContent = riskScore.toFixed(3);
   document.getElementById('legend-emb').textContent    = `Embedding (${embSim.toFixed(3)})`;
   document.getElementById('legend-struct').textContent = `Structure (${structSim != null ? structSim.toFixed(3) : 'N/A'})`;
+  document.getElementById('legend-func').textContent   = `Function (${funcSim.toFixed(3)})`;
 
-  // --- Radar (update approximate points based on scores) ---
-  updateRadar(embSim, structSim, 0, riskScore);
+  // --- Radar ---
+  updateRadar(embSim, structSim, funcSim, riskScore);
 
   // --- Bar chart (top matches) ---
   renderBarChart(data.top_matches || []);
@@ -2021,7 +2038,7 @@ function renderResults(data) {
   }
 
   // --- Score breakdown tab ---
-  renderScoreBreakdown(embSim, structSim, riskScore, embContrib, structContrib);
+  renderScoreBreakdown(embSim, structSim, riskScore, embContrib, structContrib, funcSim, funcContrib);
 
   // --- Function tab ---
   renderFunction(data.function_prediction, (data.top_matches || [])[0]);
@@ -2249,19 +2266,22 @@ function renderStructure(pdbString, pocketRes, dangerRes, alignedRegions) {
 }
 
 // ─── Score breakdown tab ───────────────────────────────────────────────────
-function renderScoreBreakdown(emb, struct, total, embC, structC) {
+function renderScoreBreakdown(emb, struct, total, embC, structC, func, funcC) {
   document.getElementById('score-emb-bar').style.width    = (emb * 100).toFixed(1) + '%';
   document.getElementById('score-emb-num').textContent    = emb.toFixed(3);
   document.getElementById('score-emb-meta').innerHTML     = `Weight: 0.50 &middot; Contribution: ${embC.toFixed(3)}`;
 
-  document.getElementById('score-struct-bar').style.width = (struct * 100).toFixed(1) + '%';
-  document.getElementById('score-struct-num').textContent = struct.toFixed(3);
+  document.getElementById('score-struct-bar').style.width = ((struct ?? 0) * 100).toFixed(1) + '%';
+  document.getElementById('score-struct-num').textContent = struct != null ? struct.toFixed(3) : '—';
   document.getElementById('score-struct-meta').innerHTML  = `Weight: 0.30 &middot; Contribution: ${structC.toFixed(3)}`;
+
+  document.getElementById('score-func-bar').style.width   = ((func ?? 0) * 100).toFixed(1) + '%';
+  document.getElementById('score-func-num').textContent   = (func ?? 0).toFixed(3);
+  document.getElementById('score-func-meta').innerHTML    = `Weight: 0.20 &middot; Contribution: ${(funcC ?? 0).toFixed(3)}`;
 
   const totalEl = document.getElementById('score-total-value');
   totalEl.textContent = total.toFixed(3);
   totalEl.className = 'score-total-value risk-' + (lastResult ? lastResult.risk_level.toLowerCase() : 'low');
-
 }
 
 function renderWaterfall(embC, structC, total) {
