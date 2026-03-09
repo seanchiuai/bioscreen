@@ -513,6 +513,37 @@ async def get_function_result(sequence_id: str) -> FunctionPrediction:
     return _function_results[sequence_id]
 
 
+@router.post("/video")
+async def generate_video_endpoint(request_data: dict, app_request: Request):
+    """Generate an MP4 analysis video for a screening result."""
+    import sys
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent.parent / "frontend"))
+    try:
+        from video_generator import ProteinVideoData, generate_video
+    except ImportError as e:
+        raise HTTPException(status_code=501, detail=f"Video generation not available: {e}")
+
+    try:
+        video_input = ProteinVideoData(
+            pdb_string=request_data.get("pdb_string", ""),
+            risk_score=request_data.get("risk_score", 0.0),
+            risk_level=request_data.get("risk_level", "LOW"),
+            sequence_length=request_data.get("sequence_length", 0),
+            top_matches=request_data.get("top_matches", []),
+            pocket_residues=request_data.get("pocket_residues", []),
+            danger_residues=request_data.get("danger_residues", []),
+            risk_factors=request_data.get("risk_factors", {}),
+            structure_predicted=request_data.get("structure_predicted", False),
+            function_prediction=request_data.get("function_prediction"),
+        )
+        video_bytes = await asyncio.to_thread(generate_video, video_input)
+        from fastapi.responses import Response
+        return Response(content=video_bytes, media_type="video/mp4")
+    except Exception as e:
+        logger.error(f"Video generation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/session/{session_id}", response_model=SessionState)
 async def get_session(session_id: str) -> SessionState:
     """Return the stored session state for *session_id*."""
