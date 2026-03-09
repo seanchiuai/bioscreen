@@ -1353,9 +1353,9 @@
     <div style="display:flex; flex-direction:column; gap:0.25rem;">
       <div class="header-left">
         <span class="logo">Orthogon<span class="logo-dot"></span></span>
-        <span class="api-badge status-pill checking">
+        <span class="api-badge status-pill" style="display:none;">
           <span class="status-dot"></span>
-          Connecting...
+          
         </span>
       </div>
       <span class="tagline">Structure-based biosecurity screening for AI-designed proteins</span>
@@ -1760,13 +1760,16 @@ async function checkHealth() {
     const r = await fetch(`${API}/health`);
     const d = await r.json();
     if (d.status === 'ok') {
+      apiBadge.style.display = '';
       apiBadge.className = 'api-badge status-pill';
       apiBadge.innerHTML = '<span class="status-dot"></span>API Connected';
     } else {
+      apiBadge.style.display = '';
       apiBadge.className = 'api-badge status-pill checking';
       apiBadge.innerHTML = '<span class="status-dot"></span>API Degraded';
     }
   } catch {
+    apiBadge.style.display = '';
     apiBadge.className = 'api-badge status-pill disconnected';
     apiBadge.innerHTML = '<span class="status-dot"></span>API Offline';
   }
