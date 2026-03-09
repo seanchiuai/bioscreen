@@ -465,6 +465,12 @@
   }
   .card-risk::before { background: linear-gradient(90deg, var(--risk-high), var(--risk-medium)); }
   .card-risk { box-shadow: var(--shadow-sm), var(--shadow-glow-high); }
+  .card-risk.level-low::before { background: linear-gradient(90deg, var(--risk-low), #4ade80); }
+  .card-risk.level-low { box-shadow: var(--shadow-sm), var(--shadow-glow-low); }
+  .card-risk.level-medium::before { background: linear-gradient(90deg, var(--risk-medium), #f5c842); }
+  .card-risk.level-medium { box-shadow: var(--shadow-sm), var(--shadow-glow-medium); }
+  .card-risk.level-high::before { background: linear-gradient(90deg, var(--risk-high), var(--risk-medium)); }
+  .card-risk.level-high { box-shadow: var(--shadow-sm), var(--shadow-glow-high); }
   .card-match::before { background: linear-gradient(90deg, var(--accent), var(--text-tertiary)); }
   .card-mode::before { background: linear-gradient(90deg, var(--risk-low), #4ade80); }
 
@@ -1606,6 +1612,11 @@ function renderResults(data) {
   const topMatch   = (data.top_matches || [])[0] || null;
 
   // --- Overview cards ---
+  // Update card-risk top border color by level
+  const riskCard = document.querySelector('.card-risk');
+  riskCard.classList.remove('level-low', 'level-medium', 'level-high');
+  riskCard.classList.add(`level-${riskLevel}`);
+
   const scoreEl = document.getElementById('risk-score-value');
   scoreEl.textContent = riskScore.toFixed(3);
   scoreEl.className = `card-value risk-${riskLevel}`;
@@ -1682,13 +1693,6 @@ function renderResults(data) {
     renderFunction(data.function_prediction);
   }
 
-  // Show generate video button if structure was predicted
-  const videoBtn = document.getElementById('generate-video-btn');
-  if (data.pdb_string) {
-    videoBtn.style.display = '';
-  } else {
-    videoBtn.style.display = 'none';
-  }
   document.getElementById('video-output').style.display = 'none';
 }
 
