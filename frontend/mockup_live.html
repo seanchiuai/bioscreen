@@ -1247,27 +1247,8 @@
 
       <!-- Similarity Comparison Bar Chart -->
       <div class="chart-container animate-in delay-5">
-        <div class="chart-title">Top Matches — Similarity Scores (y-axis: 0.85–1.0)</div>
-        <svg id="bar-chart-svg" viewBox="0 0 600 200" style="width:100%;display:block;">
-          <!-- Y axis -->
-          <line x1="140" y1="10" x2="140" y2="175" stroke="#e0ddd6" stroke-width="1"/>
-          <!-- Grid lines -->
-          <line x1="140" y1="175" x2="580" y2="175" stroke="#eceae4" stroke-width="0.5"/>
-          <line x1="140" y1="131" x2="580" y2="131" stroke="#eceae4" stroke-width="0.5"/>
-          <line x1="140" y1="87" x2="580" y2="87" stroke="#eceae4" stroke-width="0.5"/>
-          <line x1="140" y1="43" x2="580" y2="43" stroke="#eceae4" stroke-width="0.5"/>
-          <!-- Y labels -->
-          <text x="135" y="178" text-anchor="end" class="hist-label">0.0</text>
-          <text x="135" y="134" text-anchor="end" class="hist-label">0.25</text>
-          <text x="135" y="90" text-anchor="end" class="hist-label">0.50</text>
-          <text x="135" y="46" text-anchor="end" class="hist-label">0.75</text>
-          <text x="135" y="16" text-anchor="end" class="hist-label">1.0</text>
-          <g id="bar-chart-bars"></g>
-        </svg>
-        <div class="chart-legend">
-          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#1a1a1a;"></div>Embedding Similarity</div>
-          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#dc3545;"></div>Structure Similarity</div>
-        </div>
+        <div class="chart-title">Top Matches — Similarity Scores</div>
+        <div id="match-bars-list" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.5rem;"></div>
       </div>
 
     </div>
@@ -1694,6 +1675,7 @@ function renderResults(data) {
   }
 
   document.getElementById('video-output').style.display = 'none';
+  document.getElementById('generate-video-btn').style.display = data.pdb_string ? '' : 'none';
 }
 
 // ─── Generate Video ────────────────────────────────────────────────────────
@@ -1758,79 +1740,51 @@ function updateRadar(emb, struct, func, total) {
 
 // ─── Bar chart (top matches) ───────────────────────────────────────────────
 function renderBarChart(matches) {
-  const g = document.getElementById('bar-chart-bars');
-  g.innerHTML = '';
-  const slots = Math.min(matches.length, 5);
-  if (slots === 0) return;
-
-  // Zoom y-axis to 0.85–1.0 so differences are visible
-  const yMin = 0.85, yMax = 1.0;
-  const baseline = 165, chartTop = 10;
-  const maxH = baseline - chartTop; // 155px for full range
-
-  function toY(val) {
-    const clamped = Math.max(yMin, Math.min(yMax, val));
-    return baseline - ((clamped - yMin) / (yMax - yMin)) * maxH;
-  }
-
-  const groupW = Math.floor((580 - 100) / slots);
-  const barW   = Math.min(28, Math.floor(groupW * 0.32));
-  const gap    = 5;
-
-  // Update y-axis labels to reflect zoomed range
-  const svg = document.getElementById('bar-chart-svg');
-  // Remove old y-labels and add new ones
-  svg.querySelectorAll('.y-zoom-label').forEach(e => e.remove());
-  [0, 0.25, 0.5, 0.75, 1.0].forEach(t => {
-    const val = yMin + t * (yMax - yMin);
-    const y = toY(val);
-    const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    lbl.setAttribute('x', '95'); lbl.setAttribute('y', (y + 4).toFixed(0));
-    lbl.setAttribute('text-anchor', 'end'); lbl.setAttribute('class', 'hist-label y-zoom-label');
-    lbl.textContent = val.toFixed(2);
-    svg.appendChild(lbl);
-  });
+  const container = document.getElementById('match-bars-list');
+  container.innerHTML = '';
+  if (!matches.length) return;
 
   matches.slice(0, 5).forEach((m, i) => {
-    const gx = 100 + i * groupW + Math.floor((groupW - 2 * barW - gap) / 2);
-    const embVal    = m.embedding_similarity ?? 0;
-    const structVal = m.structure_similarity;
+    const emb = m.embedding_similarity ?? 0;
+    const str = m.structure_similarity;
+    const name = escHtml(m.name || '—');
+    const org  = escHtml(m.organism || '');
 
-    const embY  = toY(embVal);
-    const embH  = baseline - embY;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:1fr auto;align-items:center;gap:0.75rem;';
 
-    // Embedding bar
-    const r1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    r1.setAttribute('x', gx); r1.setAttribute('y', embY.toFixed(1));
-    r1.setAttribute('width', barW); r1.setAttribute('height', embH.toFixed(1));
-    r1.setAttribute('rx', '3'); r1.setAttribute('fill', '#1a1a1a'); r1.setAttribute('opacity', '0.8');
-    g.appendChild(r1);
+    const left = document.createElement('div');
+    left.innerHTML = `
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+        <span style="font-size:0.8rem;font-weight:500;color:var(--text-primary);">${name}</span>
+        <span style="font-size:0.75rem;color:var(--text-secondary);">${org}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span style="font-size:0.7rem;color:var(--text-tertiary);width:60px;">Embedding</span>
+          <div style="flex:1;height:6px;background:var(--bg-subtle);border-radius:3px;overflow:hidden;">
+            <div style="width:${(emb*100).toFixed(1)}%;height:100%;background:#1a1a1a;border-radius:3px;"></div>
+          </div>
+          <span style="font-size:0.72rem;font-family:'JetBrains Mono',monospace;color:var(--text-primary);width:42px;text-align:right;">${emb.toFixed(3)}</span>
+        </div>
+        ${str != null ? `
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span style="font-size:0.7rem;color:var(--text-tertiary);width:60px;">Structure</span>
+          <div style="flex:1;height:6px;background:var(--bg-subtle);border-radius:3px;overflow:hidden;">
+            <div style="width:${(str*100).toFixed(1)}%;height:100%;background:#dc3545;border-radius:3px;"></div>
+          </div>
+          <span style="font-size:0.72rem;font-family:'JetBrains Mono',monospace;color:var(--risk-high);width:42px;text-align:right;">${str.toFixed(3)}</span>
+        </div>` : ''}
+      </div>`;
 
-    // Embedding value label on top
-    const vl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    vl.setAttribute('x', (gx + barW / 2).toFixed(0)); vl.setAttribute('y', (embY - 3).toFixed(0));
-    vl.setAttribute('text-anchor', 'middle'); vl.setAttribute('class', 'hist-label');
-    vl.setAttribute('font-size', '7'); vl.textContent = embVal.toFixed(3);
-    g.appendChild(vl);
+    row.appendChild(left);
+    container.appendChild(row);
 
-    // Structure bar (if available)
-    if (structVal != null) {
-      const structY = toY(structVal);
-      const structH = baseline - structY;
-      const r2 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      r2.setAttribute('x', gx + barW + gap); r2.setAttribute('y', structY.toFixed(1));
-      r2.setAttribute('width', barW); r2.setAttribute('height', Math.max(2, structH).toFixed(1));
-      r2.setAttribute('rx', '3'); r2.setAttribute('fill', '#dc3545'); r2.setAttribute('opacity', '0.75');
-      g.appendChild(r2);
+    if (i < matches.slice(0,5).length - 1) {
+      const divider = document.createElement('div');
+      divider.style.cssText = 'height:1px;background:var(--border-light);margin:0.25rem 0;';
+      container.appendChild(divider);
     }
-
-    // Name label — first word only, truncated
-    const name = (m.name || '').replace(/^(Alpha|Beta|Gamma|Delta)-/, '$1-\n').split(/\s+/)[0];
-    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    t.setAttribute('x', (gx + barW + gap / 2).toFixed(0)); t.setAttribute('y', '180');
-    t.setAttribute('text-anchor', 'middle'); t.setAttribute('class', 'hist-label');
-    t.textContent = name.substring(0, 12);
-    g.appendChild(t);
   });
 }
 
