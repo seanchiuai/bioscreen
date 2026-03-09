@@ -1093,7 +1093,7 @@
   /* ── Session Analysis ───────────────────────────── */
   .session-section {
     margin-top: 0;
-    padding-top: 0;
+    padding-top: 1rem;
     border-top: none;
   }
   .session-section h2 {
@@ -1360,10 +1360,11 @@
       <span class="tagline">Structure-based biosecurity screening for AI-designed proteins</span>
     </div>
     <nav class="nav-goto-group">
-      <a class="nav-goto" href="mockup_live.html">Single Screen <span class="arrow">&#8594;</span></a>
+      <a class="nav-goto" href="#single-screen">Single Screen <span class="arrow">&#8594;</span></a>
       <a class="nav-goto" href="session_analysis.html">Session Analysis <span class="arrow">&#8594;</span></a>
     </nav>
   </header>
+
 
   <section class="session-section" id="session-analysis">
     <h2>Session Analysis</h2>
@@ -1496,12 +1497,12 @@
     </div>
   </section>
 
+
   <footer class="footer">
     Orthogon — Structure-based biosecurity screening for AI-designed proteins. For research purposes only.
   </footer>
 
 </div>
-
 <script>
 const API = 'http://localhost:8000/api';
 const SESSION_ID = crypto.randomUUID();
@@ -1523,25 +1524,10 @@ async function checkHealth() {
   }
 }
 
-// ─── Error helpers ─────────────────────────────────────────────────────────
-function showError(msg) {
-  errorBanner.textContent = msg;
-  errorBanner.classList.add('visible');
-}
-function clearError() {
-  errorBanner.classList.remove('visible');
-}
 
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-
 // SESSION ANALYSIS
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1890,7 +1876,6 @@ updateSaButton();
 // ─── Init ──────────────────────────────────────────────────────────────────
 checkHealth();
 updateSeqLen();
-</script>
 
 checkHealth();
 </script>
