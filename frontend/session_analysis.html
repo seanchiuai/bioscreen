@@ -1506,20 +1506,7 @@ const API = 'http://localhost:8000/api';
 const SESSION_ID = crypto.randomUUID();
 
 async function checkHealth() {
-  try {
-    const r = await fetch(`${API}/health`);
-    const d = await r.json();
-    if (d.status === 'ok') {
-      apiBadge.className = 'api-badge status-pill';
-      apiBadge.innerHTML = '<span class="status-dot"></span>API Connected';
-    } else {
-      apiBadge.className = 'api-badge status-pill checking';
-      apiBadge.innerHTML = '<span class="status-dot"></span>API Degraded';
-    }
-  } catch {
-    apiBadge.className = 'api-badge status-pill disconnected';
-    apiBadge.innerHTML = '<span class="status-dot"></span>API Offline';
-  }
+  // No status badge on this page
 }
 
 
