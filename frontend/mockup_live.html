@@ -1089,6 +1089,259 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+
+  /* ── Session Analysis ───────────────────────────── */
+  .session-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-default);
+  }
+  .session-section h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin-bottom: 0.25rem;
+  }
+  .session-section .section-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1.5rem;
+  }
+  .session-input-grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .session-input-grid { grid-template-columns: 1fr; }
+  }
+  .session-textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-input);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    resize: vertical;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .session-textarea:focus { border-color: var(--border-focus); }
+  .session-textarea::placeholder { color: var(--text-tertiary); }
+  .session-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .session-controls .btn-screen {
+    width: 100%;
+  }
+  .session-mode-group {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .session-mode-btn {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .session-mode-btn.active {
+    background: var(--accent);
+    color: var(--text-inverse);
+    border-color: var(--accent);
+  }
+  .session-progress {
+    margin: 1rem 0;
+  }
+  .session-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .session-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .session-progress-text {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-top: 0.35rem;
+  }
+  .alert-banner {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .alert-banner.alert-error {
+    background: var(--risk-high-bg);
+    border: 1px solid var(--risk-high-border);
+    color: var(--risk-high);
+  }
+  .alert-banner.alert-warning {
+    background: var(--risk-medium-bg);
+    border: 1px solid var(--risk-medium-border);
+    color: var(--risk-medium);
+  }
+  .alert-banner.alert-info {
+    background: var(--risk-low-bg);
+    border: 1px solid var(--risk-low-border);
+    color: var(--risk-low);
+  }
+  .alert-banner.visible { display: block; }
+  .session-results-grid {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .session-results-grid { grid-template-columns: 1fr; }
+  }
+  .session-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .session-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--border-default);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .session-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .session-table tr:hover td { background: var(--bg-subtle); }
+  .risk-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .risk-pill.low { background: var(--risk-low-bg); color: var(--risk-low); }
+  .risk-pill.medium { background: var(--risk-medium-bg); color: var(--risk-medium); }
+  .risk-pill.high { background: var(--risk-high-bg); color: var(--risk-high); }
+  .risk-pill.error { background: var(--bg-subtle); color: var(--text-tertiary); }
+  .session-chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+  }
+  .session-chart-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+  }
+  .monitoring-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .monitoring-grid { grid-template-columns: 1fr; }
+  }
+  .monitoring-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+  }
+  .monitoring-card h4 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  .monitoring-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0;
+    font-size: 0.82rem;
+  }
+  .monitoring-metric-label { color: var(--text-secondary); }
+  .monitoring-metric-value { font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+  .status-flagged { color: var(--risk-high); }
+  .status-normal { color: var(--risk-low); }
+  .seq-detail-expander {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+  .seq-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+  .seq-detail-header:hover { background: var(--bg-subtle); }
+  .seq-detail-header .arrow-icon { transition: transform 0.2s; font-size: 0.75rem; color: var(--text-tertiary); }
+  .seq-detail-header.open .arrow-icon { transform: rotate(90deg); }
+  .seq-detail-body {
+    display: none;
+    padding: 0 1rem 1rem;
+    font-size: 0.82rem;
+  }
+  .seq-detail-body.open { display: block; }
+  .detail-mini-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .detail-mini-card {
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+  }
+  .detail-mini-card .label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.03em; }
+  .detail-mini-card .value { font-size: 1rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+  .detail-matches-list {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+  .detail-matches-list li {
+    padding: 0.2rem 0;
+    list-style: none;
+  }
 </style>
 </head>
 <body>
@@ -1436,6 +1689,138 @@
     </div>
 
   </div><!-- end results-section -->
+
+  <!-- ═══ SESSION ANALYSIS ═══ -->
+  <section class="session-section" id="session-analysis">
+    <h2>Session Analysis</h2>
+    <p class="section-subtitle">Screen multiple sequences sequentially and monitor for behavioral convergence patterns.</p>
+
+    <div class="session-input-grid">
+      <div>
+        <div class="session-mode-group" style="margin-bottom:0.75rem;">
+          <button class="session-mode-btn active" id="sa-mode-paste">Paste Sequences</button>
+          <button class="session-mode-btn" id="sa-mode-demo">Demo: Convergence Attack</button>
+        </div>
+        <textarea class="session-textarea" id="sa-textarea" placeholder=">Sequence 1&#10;MKTAYIAKQRQISFVKSH...&#10;&#10;>Sequence 2&#10;MVLSPADKTNVKAAWGKV..."></textarea>
+        <div id="sa-demo-info" style="display:none;padding:0.75rem 1rem;background:var(--risk-low-bg);border:1px solid var(--risk-low-border);border-radius:var(--radius-md);font-size:0.82rem;color:var(--text-secondary);margin-top:0.5rem;">
+          <strong>Convergence attack demo</strong> — 8 sequences that individually look benign but progressively converge toward irditoxin snake venom. Early queries score LOW; later queries score MEDIUM/HIGH. The session monitor flags the pattern even before the final query.
+        </div>
+      </div>
+      <div class="session-controls">
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-secondary);display:block;margin-bottom:0.25rem;">Top K matches</label>
+          <input type="number" class="text-input" id="sa-topk" value="5" min="1" max="20" style="width:100%;">
+        </div>
+        <button class="btn-screen" id="sa-screen-btn" disabled>Screen Sequences</button>
+        <div class="session-progress" id="sa-progress" style="display:none;">
+          <div class="session-progress-bar"><div class="session-progress-fill" id="sa-progress-fill"></div></div>
+          <div class="session-progress-text" id="sa-progress-text">Preparing...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert banner -->
+    <div class="alert-banner" id="sa-alert-banner"></div>
+
+    <!-- Results -->
+    <div id="sa-results" style="display:none;">
+
+      <!-- Summary table + risk trend chart -->
+      <div class="session-results-grid">
+        <div>
+          <div class="session-chart-title">Results Summary</div>
+          <table class="session-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Sequence</th>
+                <th>Risk Score</th>
+                <th>Level</th>
+                <th>Top Match</th>
+              </tr>
+            </thead>
+            <tbody id="sa-table-body"></tbody>
+          </table>
+        </div>
+        <div class="session-chart-container">
+          <div class="session-chart-title">Risk Trend</div>
+          <svg id="sa-trend-chart" viewBox="0 0 300 180" style="width:100%;display:block;">
+            <!-- Grid lines -->
+            <line x1="40" y1="10" x2="40" y2="150" stroke="#e0ddd6" stroke-width="0.5"/>
+            <line x1="40" y1="150" x2="290" y2="150" stroke="#e0ddd6" stroke-width="0.5"/>
+            <line x1="40" y1="10" x2="290" y2="10" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+            <line x1="40" y1="50" x2="290" y2="50" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+            <line x1="40" y1="80" x2="290" y2="80" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+            <line x1="40" y1="115" x2="290" y2="115" stroke="#eceae4" stroke-width="0.5" stroke-dasharray="3"/>
+            <!-- Y-axis labels -->
+            <text x="35" y="14" text-anchor="end" class="hist-label">1.0</text>
+            <text x="35" y="54" text-anchor="end" class="hist-label">0.7</text>
+            <text x="35" y="84" text-anchor="end" class="hist-label">0.5</text>
+            <text x="35" y="119" text-anchor="end" class="hist-label">0.25</text>
+            <text x="35" y="154" text-anchor="end" class="hist-label">0.0</text>
+            <!-- Threshold lines -->
+            <line x1="40" y1="73" x2="290" y2="73" stroke="#dc3545" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.5"/>
+            <text x="292" y="76" class="hist-label" fill="#dc3545" font-size="8">HIGH</text>
+            <line x1="40" y1="108" x2="290" y2="108" stroke="#d48c0e" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.5"/>
+            <text x="292" y="111" class="hist-label" fill="#d48c0e" font-size="8">MED</text>
+            <!-- Data path + points rendered by JS -->
+            <polyline id="sa-trend-line" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linejoin="round"/>
+            <g id="sa-trend-dots"></g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Session Monitoring -->
+      <div id="sa-monitoring" style="display:none;">
+        <div class="session-chart-title" style="margin-bottom:0.75rem;">Session Monitoring</div>
+        <div class="monitoring-grid">
+          <div class="monitoring-card">
+            <h4>Convergence Detector</h4>
+            <div class="monitoring-metric">
+              <span class="monitoring-metric-label">Status</span>
+              <span class="monitoring-metric-value" id="sa-conv-status">—</span>
+            </div>
+            <div class="monitoring-metric">
+              <span class="monitoring-metric-label">Mean Similarity</span>
+              <span class="monitoring-metric-value" id="sa-conv-mean">—</span>
+            </div>
+            <div class="monitoring-metric">
+              <span class="monitoring-metric-label">Similarity Trend</span>
+              <span class="monitoring-metric-value" id="sa-conv-trend">—</span>
+            </div>
+            <div class="monitoring-metric">
+              <span class="monitoring-metric-label">Window Size</span>
+              <span class="monitoring-metric-value" id="sa-conv-window">—</span>
+            </div>
+          </div>
+          <div class="monitoring-card">
+            <h4>Perturbation Detector</h4>
+            <div class="monitoring-metric">
+              <span class="monitoring-metric-label">Status</span>
+              <span class="monitoring-metric-value" id="sa-pert-status">—</span>
+            </div>
+            <div class="monitoring-metric">
+              <span class="monitoring-metric-label">Cluster Count</span>
+              <span class="monitoring-metric-value" id="sa-pert-clusters">—</span>
+            </div>
+            <div class="monitoring-metric">
+              <span class="monitoring-metric-label">Max Cluster Size</span>
+              <span class="monitoring-metric-value" id="sa-pert-maxcluster">—</span>
+            </div>
+            <div class="monitoring-metric">
+              <span class="monitoring-metric-label">High-Similarity Pairs</span>
+              <span class="monitoring-metric-value" id="sa-pert-pairs">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-sequence detail -->
+      <div class="session-chart-title" style="margin-bottom:0.75rem;">Per-Sequence Detail</div>
+      <div id="sa-details"></div>
+
+    </div>
+  </section>
 
   <!-- Footer -->
   <footer class="footer">
@@ -2177,6 +2562,352 @@ function escHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SESSION ANALYSIS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SA_DEMO_SEQUENCES = [
+  ["Convergence query 1 (benign start)", "KKFERCQDTRTLKRLAMQGMPNISLANWMCLAKWISGYNTRANKYNGGRRSTDYGICQIWSRYWCNIGKTPGAVSCCGLSCSALLEDNMQAAVTCALRVNRDPQMINAWVWWSNRCSNTDVVQYVQGCGD"],
+  ["Convergence query 2 (benign)", "MSICCEISFGVVSIEVELDEMVHRGIFVVSGEGSGDAAYRVLTHKFICWTGKTGDPEPTLDTTFSMPLQCFYRYHDNMKQVDFFKVEMEEGLVQKRCQFMKDRGNDKTCAEFNFEGDILVNRIEL"],
+  ["Convergence query 3 (benign)", "GVLSMADKTGVCARWGKHGDHTGEYGKKYLERMFLSQVTTKQMFPLFDLSHPSAQVKLWGKKVADALTYAVAHHCSMPNALSALADLHATKLRFDPVNFKLLSHCLLVILTARLMAEITHQVHQSLDWFNPS"],
+  ["Convergence query 4 (transitioning)", "QVIKAPRYPAQRKHPQDVNDCIAIEHKGEGELPHILYWNNMQERQTCVRWIDRRCMMHKYCAHQICSAIIWVQENCKHVGSWKLCLGVCFSASMCSDDCLVYYTRQYEH"],
+  ["Convergence query 5 (transitioning)", "KGVAYCLRIVWHVFCLGYWDRPGSYQYDWAWKGRQWSGQEYSPCRKCTRVCNSCLSYGADCEFLKSVHLFRQTALCSLSVPMKGQSPFTPEATPFFKPMCCMSPDLNQD"],
+  ["Convergence query 6 (toxin-like)", "MKGLLCNIWVGPIWKAGLARQLQLLPQPWLPWQGQAVGPPNHFCFEWFLQFSSTCSSAMRIYRGSCPVNYRNIYNCEDKLACKSVRVFCPTKNRNENNKRYRMFRCWIF"],
+  ["Convergence query 7 (toxin-like)", "MKFLLLANAMKQFVCLTYTASLELGDFKIDWYQYEAVGPRYREKFEDERFTSSECSCALWCSEVKCYTLYRPKKNAFLFWATQGCAECCDQAKTQWRVPCHRSEQINDD"],
+  ["Convergence query 8 (near-toxin)", "CKTMLLAVAVYAFVQLGSADQTGLNRQQEHFGQSQAVGPPYTLCFECNRRTLDDCSTALRCYRGCCYTGRRPDENCEMEWAYKGCNETCDTAGPNERVKCCRHPRCLDV"],
+];
+
+let saMode = 'paste'; // 'paste' or 'demo'
+let saResults = []; // [{label, data, error}]
+let saSessionId = '';
+
+const saTextarea = document.getElementById('sa-textarea');
+const saScreenBtn = document.getElementById('sa-screen-btn');
+const saDemoInfo = document.getElementById('sa-demo-info');
+
+// Mode toggle
+document.getElementById('sa-mode-paste').addEventListener('click', () => {
+  saMode = 'paste';
+  document.getElementById('sa-mode-paste').classList.add('active');
+  document.getElementById('sa-mode-demo').classList.remove('active');
+  saTextarea.style.display = '';
+  saDemoInfo.style.display = 'none';
+  updateSaButton();
+});
+
+document.getElementById('sa-mode-demo').addEventListener('click', () => {
+  saMode = 'demo';
+  document.getElementById('sa-mode-demo').classList.add('active');
+  document.getElementById('sa-mode-paste').classList.remove('active');
+  saTextarea.style.display = 'none';
+  saDemoInfo.style.display = '';
+  updateSaButton();
+});
+
+saTextarea.addEventListener('input', updateSaButton);
+
+function updateSaButton() {
+  if (saMode === 'demo') {
+    saScreenBtn.disabled = false;
+    saScreenBtn.textContent = `Screen ${SA_DEMO_SEQUENCES.length} Sequences`;
+  } else {
+    const seqs = parseFasta(saTextarea.value);
+    const n = seqs.length;
+    saScreenBtn.disabled = n === 0;
+    saScreenBtn.textContent = n > 0 ? `Screen ${n} Sequence${n === 1 ? '' : 's'}` : 'Screen Sequences';
+  }
+}
+
+function parseFasta(raw) {
+  const sequences = [];
+  let currentLabel = null;
+  let currentSeqLines = [];
+
+  for (const line of raw.split('\n')) {
+    const stripped = line.trim();
+    if (!stripped) {
+      if (currentSeqLines.length) {
+        sequences.push([currentLabel || `Sequence ${sequences.length + 1}`, currentSeqLines.join('')]);
+        currentLabel = null;
+        currentSeqLines = [];
+      }
+      continue;
+    }
+    if (stripped.startsWith('>')) {
+      if (currentSeqLines.length) {
+        sequences.push([currentLabel || `Sequence ${sequences.length + 1}`, currentSeqLines.join('')]);
+        currentSeqLines = [];
+      }
+      currentLabel = stripped.slice(1).trim() || `Sequence ${sequences.length + 1}`;
+    } else {
+      currentSeqLines.push(stripped);
+    }
+  }
+  if (currentSeqLines.length) {
+    sequences.push([currentLabel || `Sequence ${sequences.length + 1}`, currentSeqLines.join('')]);
+  }
+  return sequences;
+}
+
+// Screen handler
+saScreenBtn.addEventListener('click', async () => {
+  const sequences = saMode === 'demo' ? SA_DEMO_SEQUENCES : parseFasta(saTextarea.value);
+  if (sequences.length === 0) return;
+
+  saSessionId = crypto.randomUUID();
+  saResults = [];
+
+  saScreenBtn.disabled = true;
+  const progress = document.getElementById('sa-progress');
+  const progressFill = document.getElementById('sa-progress-fill');
+  const progressText = document.getElementById('sa-progress-text');
+  progress.style.display = '';
+  progressFill.style.width = '0%';
+
+  document.getElementById('sa-results').style.display = 'none';
+  document.getElementById('sa-alert-banner').classList.remove('visible');
+
+  for (let i = 0; i < sequences.length; i++) {
+    const [label, seq] = sequences[i];
+    progressText.textContent = `Screening ${i + 1}/${sequences.length}: ${label.substring(0, 50)}...`;
+    progressFill.style.width = ((i) / sequences.length * 100).toFixed(1) + '%';
+
+    try {
+      const resp = await fetch(`${API}/screen`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Id': saSessionId,
+        },
+        body: JSON.stringify({
+          sequence: seq.replace(/\s/g, ''),
+          sequence_id: label,
+          top_k: parseInt(document.getElementById('sa-topk').value) || 5,
+        }),
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        saResults.push({ label, data, error: null });
+      } else {
+        const errText = await resp.text();
+        saResults.push({ label, data: null, error: `Server ${resp.status}: ${errText}` });
+      }
+    } catch (e) {
+      saResults.push({ label, data: null, error: e.message });
+    }
+  }
+
+  progressFill.style.width = '100%';
+  progressText.textContent = 'Done!';
+
+  // Fetch alerts
+  let alerts = null;
+  try {
+    const alertResp = await fetch(`${API}/session/${saSessionId}/alerts`);
+    if (alertResp.ok) {
+      alerts = await alertResp.json();
+    }
+  } catch { /* ignore */ }
+
+  renderSessionResults(saResults, alerts);
+
+  saScreenBtn.disabled = false;
+  saScreenBtn.textContent = saMode === 'demo'
+    ? `Screen ${SA_DEMO_SEQUENCES.length} Sequences`
+    : `Screen ${sequences.length} Sequence${sequences.length === 1 ? '' : 's'}`;
+});
+
+function renderSessionResults(results, alerts) {
+  document.getElementById('sa-results').style.display = '';
+
+  // Alert banner
+  if (alerts) {
+    const anomalyScore = alerts.anomaly_score ?? 0;
+    const explanation = alerts.explanation ?? '';
+    const banner = document.getElementById('sa-alert-banner');
+
+    if (anomalyScore > 0.5) {
+      banner.className = 'alert-banner alert-error visible';
+      banner.innerHTML = `<strong>Anomaly detected</strong> (score ${anomalyScore.toFixed(2)}): ${escHtml(explanation)}`;
+    } else if (anomalyScore > 0.3) {
+      banner.className = 'alert-banner alert-warning visible';
+      banner.innerHTML = `<strong>Elevated anomaly score</strong> (${anomalyScore.toFixed(2)}): ${escHtml(explanation)}`;
+    } else {
+      banner.className = 'alert-banner alert-info visible';
+      banner.innerHTML = `<strong>Normal</strong> (score ${anomalyScore.toFixed(2)}): No anomalous patterns detected.`;
+    }
+  }
+
+  // Summary table
+  const tbody = document.getElementById('sa-table-body');
+  const scores = [];
+  tbody.innerHTML = results.map((r, i) => {
+    if (r.data) {
+      const score = r.data.risk_score ?? 0;
+      const level = (r.data.risk_level ?? 'unknown').toLowerCase();
+      const matches = r.data.top_matches || [];
+      const topMatch = matches.length ? (matches[0].name || matches[0].uniprot_id || '—') : '—';
+      scores.push(score);
+      return `<tr>
+        <td>${i + 1}</td>
+        <td>${escHtml(r.label.substring(0, 50))}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;">${score.toFixed(3)}</td>
+        <td><span class="risk-pill ${level}">${level}</span></td>
+        <td>${escHtml(topMatch)}</td>
+      </tr>`;
+    } else {
+      scores.push(null);
+      return `<tr>
+        <td>${i + 1}</td>
+        <td>${escHtml(r.label.substring(0, 50))}</td>
+        <td>—</td>
+        <td><span class="risk-pill error">error</span></td>
+        <td style="color:var(--text-tertiary);font-size:0.78rem;">${escHtml((r.error || 'unknown').substring(0, 40))}</td>
+      </tr>`;
+    }
+  }).join('');
+
+  // Risk trend chart
+  renderTrendChart(scores);
+
+  // Monitoring section
+  if (alerts) {
+    const monEl = document.getElementById('sa-monitoring');
+    monEl.style.display = '';
+
+    const conv = alerts.convergence || {};
+    const pert = alerts.perturbation || {};
+
+    const convFlagged = conv.is_flagged ?? false;
+    document.getElementById('sa-conv-status').textContent = convFlagged ? 'FLAGGED' : 'Normal';
+    document.getElementById('sa-conv-status').className = `monitoring-metric-value ${convFlagged ? 'status-flagged' : 'status-normal'}`;
+    document.getElementById('sa-conv-mean').textContent = (conv.mean_similarity ?? 0).toFixed(4);
+    document.getElementById('sa-conv-trend').textContent = (conv.similarity_trend ?? 0).toFixed(4);
+    document.getElementById('sa-conv-window').textContent = conv.window_size ?? 0;
+
+    const pertFlagged = pert.is_flagged ?? false;
+    document.getElementById('sa-pert-status').textContent = pertFlagged ? 'FLAGGED' : 'Normal';
+    document.getElementById('sa-pert-status').className = `monitoring-metric-value ${pertFlagged ? 'status-flagged' : 'status-normal'}`;
+    document.getElementById('sa-pert-clusters').textContent = pert.cluster_count ?? 0;
+    document.getElementById('sa-pert-maxcluster').textContent = pert.max_cluster_size ?? 0;
+    document.getElementById('sa-pert-pairs').textContent = (pert.high_sim_pairs || []).length;
+  } else {
+    document.getElementById('sa-monitoring').style.display = 'none';
+  }
+
+  // Per-sequence detail
+  const detailsEl = document.getElementById('sa-details');
+  detailsEl.innerHTML = results.map((r, i) => {
+    if (!r.data) {
+      return `<div class="seq-detail-expander">
+        <div class="seq-detail-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+          <span>${escHtml(r.label)}</span>
+          <span class="arrow-icon">&#9654;</span>
+        </div>
+        <div class="seq-detail-body">
+          <p style="color:var(--risk-high);">${escHtml(r.error || 'Screening failed')}</p>
+        </div>
+      </div>`;
+    }
+
+    const d = r.data;
+    const score = (d.risk_score ?? 0).toFixed(3);
+    const level = (d.risk_level ?? 'unknown').toLowerCase();
+    const rf = d.risk_factors || {};
+    const embSim = (rf.max_embedding_similarity ?? 0).toFixed(3);
+    const structSim = rf.max_structure_similarity != null ? rf.max_structure_similarity.toFixed(3) : '—';
+    const funcSim = (rf.function_overlap ?? 0).toFixed(3);
+    const matches = d.top_matches || [];
+
+    let matchesList = '';
+    if (matches.length) {
+      matchesList = '<ul class="detail-matches-list">' +
+        matches.slice(0, 3).map(m =>
+          `<li>${escHtml(m.name || m.uniprot_id || '—')} — emb: ${(m.embedding_similarity ?? 0).toFixed(3)}${m.structure_similarity != null ? ', struct: ' + m.structure_similarity.toFixed(3) : ''}</li>`
+        ).join('') + '</ul>';
+    }
+
+    return `<div class="seq-detail-expander">
+      <div class="seq-detail-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+        <span>${escHtml(r.label)} <span class="risk-pill ${level}" style="margin-left:0.5rem;">${level} ${score}</span></span>
+        <span class="arrow-icon">&#9654;</span>
+      </div>
+      <div class="seq-detail-body">
+        <div class="detail-mini-cards">
+          <div class="detail-mini-card">
+            <div class="label">Risk Score</div>
+            <div class="value risk-${level}">${score}</div>
+          </div>
+          <div class="detail-mini-card">
+            <div class="label">Embedding</div>
+            <div class="value">${embSim}</div>
+          </div>
+          <div class="detail-mini-card">
+            <div class="label">Structure</div>
+            <div class="value">${structSim}</div>
+          </div>
+          <div class="detail-mini-card">
+            <div class="label">Function</div>
+            <div class="value">${funcSim}</div>
+          </div>
+        </div>
+        ${matchesList || '<p style="color:var(--text-tertiary);">No matches found.</p>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTrendChart(scores) {
+  const validScores = scores.map((s, i) => s != null ? { x: i, y: s } : null).filter(Boolean);
+  if (validScores.length === 0) return;
+
+  const n = scores.length;
+  const chartLeft = 40, chartRight = 290, chartTop = 10, chartBottom = 150;
+  const chartH = chartBottom - chartTop;
+  const chartW = chartRight - chartLeft;
+
+  const points = validScores.map(({ x, y }) => {
+    const px = chartLeft + (x / Math.max(n - 1, 1)) * chartW;
+    const py = chartBottom - y * chartH;
+    return { px, py, y };
+  });
+
+  // Draw line
+  document.getElementById('sa-trend-line').setAttribute('points',
+    points.map(p => `${p.px.toFixed(1)},${p.py.toFixed(1)}`).join(' ')
+  );
+
+  // Draw dots
+  const dotsG = document.getElementById('sa-trend-dots');
+  dotsG.innerHTML = '';
+  const riskColors = { high: '#dc3545', medium: '#d48c0e', low: '#2a9d5c' };
+  points.forEach(p => {
+    const level = p.y >= 0.55 ? 'high' : p.y >= 0.3 ? 'medium' : 'low';
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', p.px.toFixed(1));
+    circle.setAttribute('cy', p.py.toFixed(1));
+    circle.setAttribute('r', '4');
+    circle.setAttribute('fill', riskColors[level]);
+    circle.setAttribute('stroke', '#fff');
+    circle.setAttribute('stroke-width', '1.5');
+    dotsG.appendChild(circle);
+  });
+
+  // X-axis labels
+  points.forEach((p, i) => {
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', p.px.toFixed(1));
+    t.setAttribute('y', '168');
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('class', 'hist-label');
+    t.textContent = validScores[i].x + 1;
+    dotsG.appendChild(t);
+  });
+}
+
+updateSaButton();
 
 // ─── Init ──────────────────────────────────────────────────────────────────
 checkHealth();
