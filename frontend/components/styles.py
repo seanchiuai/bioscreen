@@ -131,6 +131,17 @@ def inject_custom_css() -> None:
         border-radius: 3px;
         background: #6366f1;
     }
+    [data-testid="stPageLink"] > a {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        transition: all 0.2s;
+    }
+    [data-testid="stPageLink"] > a:hover {
+        border-color: #1a1a1a;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .block-container { padding-top: 2rem; }

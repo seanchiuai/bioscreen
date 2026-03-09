@@ -7,6 +7,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from components.summary_cards import render_summary_cards
+from components.charts import (
+    build_radar_chart, build_donut_chart, build_matches_bar_chart,
+    build_similarity_heatmap, build_waterfall_chart, build_threshold_chart,
+    build_function_bars, build_function_overlap,
+)
 from components.protein_3d import render_protein_3d, _aligned_residue_set
 from components.api_client import get_function_result
 
@@ -47,6 +52,21 @@ def render_results(data: dict, key_prefix: str = "") -> None:
     with tabs[0]:
         render_summary_cards(data)
 
+        factors = data.get("risk_factors", {})
+        c1, c2 = st.columns(2)
+        with c1:
+            fig = build_radar_chart(factors)
+            if fig:
+                st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}radar")
+        with c2:
+            fig = build_donut_chart(factors, data["risk_score"])
+            if fig:
+                st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}donut")
+
+        fig = build_matches_bar_chart(data.get("top_matches", []))
+        if fig:
+            st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}match_bars")
+
     # ── Tab 1: Matches ───────────────────────────────────────────────────
     with tabs[1]:
         if data.get("top_matches"):
@@ -80,6 +100,10 @@ def render_results(data: dict, key_prefix: str = "") -> None:
                 col_config["Structure Sim"] = st.column_config.TextColumn("Structure Sim")
 
             st.dataframe(df, column_config=col_config, width="stretch", hide_index=True)
+
+            fig = build_similarity_heatmap(data.get("top_matches", []))
+            if fig:
+                st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}heatmap")
         else:
             st.info("No significant matches found.")
 
@@ -250,6 +274,16 @@ def render_results(data: dict, key_prefix: str = "") -> None:
 
         st.markdown(f"**Final Score: {risk_score:.3f}**")
 
+        c1, c2 = st.columns([3, 2])
+        with c1:
+            fig = build_waterfall_chart(factors, risk_score)
+            if fig:
+                st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}waterfall")
+        with c2:
+            fig = build_threshold_chart(risk_score)
+            if fig:
+                st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}threshold")
+
     # ── Tab 4: Function (only shown when InterPro result is ready) ───────
     if real_fn is not None:
         with tabs[4]:
@@ -303,6 +337,29 @@ def render_results(data: dict, key_prefix: str = "") -> None:
 
                 if not go_terms and not ec_numbers:
                     st.info("No GO terms or EC numbers predicted.")
+
+                fig = build_function_bars(function_pred)
+                if fig:
+                    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}func_bars")
+
+                # Function overlap display
+                top_match = data.get("top_matches", [{}])[0] if data.get("top_matches") else {}
+                overlap = build_function_overlap(function_pred, top_match)
+                if overlap:
+                    query_only, shared, match_only = overlap
+                    o1, o2, o3 = st.columns(3)
+                    with o1:
+                        st.markdown("**Query Only**")
+                        for t in query_only:
+                            st.caption(t)
+                    with o2:
+                        st.markdown("**Shared**")
+                        for t in shared:
+                            st.caption(t)
+                    with o3:
+                        st.markdown(f"**{top_match.get('name', 'Match')} Only**")
+                        for t in match_only:
+                            st.caption(t)
 
     # ── Tab 5 / 4: Explain ───────────────────────────────────────────────
     explain_idx = 5 if real_fn is not None else 4

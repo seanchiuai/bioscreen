@@ -16,6 +16,13 @@ def page():
     """Render the single-sequence screening page."""
     inject_custom_css()
 
+    # Goto navigation
+    nav_cols = st.columns([1, 1, 6])
+    with nav_cols[0]:
+        st.page_link("pages/single_screen.py", label="Single Screen", icon="\U0001f52c")
+    with nav_cols[1]:
+        st.page_link("pages/session_analysis.py", label="Session Analysis", icon="\U0001f4ca")
+
     # Session state initialization
     if "session_id" not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
